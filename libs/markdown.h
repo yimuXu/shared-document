@@ -10,6 +10,8 @@
  * in detail in the assignment spec.
  */
 
+// Return -1 if the cursor position is invalid
+
 // Initialize and free a document
 document * markdown_init(void);
 void markdown_free(document *doc);
