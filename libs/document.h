@@ -7,13 +7,13 @@
  * Ensure you DO NOT change the name of document struct.
  */
 
-typedef struct {
-    // TODO
-} document;
-
 typedef struct{
     // TODO
 } chunk;
+
+typedef struct {
+    // TODO
+} document;
 
 // Functions from here onwards.
 #endif
