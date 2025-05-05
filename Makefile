@@ -8,4 +8,6 @@ server:
 
 client:
 
+markdown.o:
+
 clean:
