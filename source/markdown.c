@@ -1,6 +1,6 @@
 #include "../libs/markdown.h"
 
-#define SUCCESS 0  // Return 0 for success as per your unit tests
+#define SUCCESS 0 
 
 // === Init and Free ===
 document *markdown_init(void) {
