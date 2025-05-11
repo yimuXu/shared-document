@@ -1,8 +1,8 @@
 # TODO: make sure the rules for server client and markdown filled!
 CC := gcc
-CFLAGS := -Wall -Wextra
+CFLAGS := -Wall -Wextra -std=c11 -Ilibs
 
-all: server client
+all: server client markdown.o
 
 server: server.c markdown.o
 	$(CC) $(CFLAGS) -o server server.o markdown.o
@@ -14,8 +14,8 @@ client: client.c
 # client.o: client.c
 # 	$(CC) $(CFLAGS) -c client.c
 
-markdown.o: markdown.c
-	$(CC) $(CFLAGS) -c markdown.c -o markdown.o
+markdown.o: source/markdown.c libs/markdown.h
+	$(CC) $(CFLAGS) -c source/markdown.c -o source/markdown.o
 
 clean:
-	re -f server client source/*.o
+	rm -f server client source/*.o
