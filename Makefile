@@ -14,8 +14,8 @@ client: source/client.c
 # client.o: client.c
 # 	$(CC) $(CFLAGS) -c client.c
 
-markdown.o: SOURCE/markdown.c
-	$(CC) $(CFLAGS) -c SOURCE/markdown.c -o markdown.o
+markdown.o: source/markdown.c
+	$(CC) $(CFLAGS) -c source/markdown.c -o source/markdown.o
 
 clean:
 	re -f server client source/*.o
