@@ -9,10 +9,16 @@
 
 typedef struct{
     // TODO
+    char* data;
+    uint64_t chunksize;
+    chunk* next;
+    chunk* prev;
 } chunk;
 
 typedef struct {
     // TODO
+    chunk* head;
+    uint64_t size;
 } document;
 
 // Functions from here onwards.
