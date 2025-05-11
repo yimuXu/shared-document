@@ -8,6 +8,10 @@
 // === Init and Free ===
 document *markdown_init(void) {
     document *doc = (document*)malloc(sizeof(document));
+    if (doc == NULL) {
+        return NULL;
+    }
+    doc->head = malloc(sizeof(chunk));
     doc->head->chunksize = 0;
     doc->head->data = NULL;
     doc->head->next = NULL;
@@ -107,7 +111,7 @@ int markdown_insert(document *doc, uint64_t version, size_t pos, const char *con
 }
 
 int markdown_delete(document *doc, uint64_t version, size_t pos, size_t len) {
-    //(void)doc; (void)version; (void)pos; (void)len;
+    (void)doc; (void)version; (void)pos; (void)len;
     return SUCCESS;
 }
 
