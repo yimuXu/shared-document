@@ -52,8 +52,16 @@ chunk* split_chunk(chunk* current, size_t pos) {
 // === Edit Commands ===
 int markdown_insert(document *doc, uint64_t version, size_t pos, const char *content) {
     //(void)doc; (void)version; (void)pos; (void)content;
-    if(doc == NULL || content == NULL) {
-        return INVALID_CURSOR_POS;
+    if(content == NULL) {
+        return DELETE_POSITION;
+    }
+    if(doc == NULL) {
+        markdown_init();
+        doc->head->data = malloc(strlen(content)+1);
+        strcpy(doc->head->data, content);
+        doc->head->data[strlen(content)] = '\0';
+        doc->head->chunksize = strlen(content);
+        return SUCCESS;
     }
     if(pos > doc->size) {
         return INVALID_CURSOR_POS;
