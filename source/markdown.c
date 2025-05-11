@@ -7,7 +7,7 @@
 
 // === Init and Free ===
 document *markdown_init(void) {
-    document *doc = malloc(sizeof(document));
+    document *doc = (document*)malloc(sizeof(document));
     doc->head->chunksize = 0;
     doc->head->data = NULL;
     doc->head->next = NULL;
@@ -48,6 +48,9 @@ chunk* split_chunk(chunk* current, size_t pos) {
 // === Edit Commands ===
 int markdown_insert(document *doc, uint64_t version, size_t pos, const char *content) {
     //(void)doc; (void)version; (void)pos; (void)content;
+    if(doc == NULL || content == NULL) {
+        return INVALID_CURSOR_POS;
+    }
     if(pos > doc->size) {
         return INVALID_CURSOR_POS;
     }
@@ -71,15 +74,17 @@ int markdown_insert(document *doc, uint64_t version, size_t pos, const char *con
             current = split_chunk(current, current_pos);
             current_pos = 0;
     }
-
+    // insert
     if(current_pos == 0) {
         if(current->next == NULL) {
             chunk* new_chunk = malloc(sizeof(chunk));
-            new_chunk->data = content;
+            new_chunk->data = malloc(strlen(content)+1);
+            strcpy(new_chunk->data, content);
+            new_chunk->data[strlen(content)] = '\0';
             new_chunk->chunksize = strlen(content);
             new_chunk->next = NULL;
             // find last chunk
-            chunk* last_chunk = find_chunk(doc->head, pos);
+            chunk* last_chunk = current;
             new_chunk->prev = last_chunk;
             last_chunk->next = new_chunk;
             doc->size += new_chunk->chunksize;
@@ -87,7 +92,9 @@ int markdown_insert(document *doc, uint64_t version, size_t pos, const char *con
         }else if(current->next != NULL) {
             // create a new chunk
             chunk* new_chunk = malloc(sizeof(chunk));
-            new_chunk->data = content;
+            new_chunk->data = malloc(strlen(content)+1);
+            strcpy(new_chunk->data, content);
+            new_chunk->data[strlen(content)] = '\0';
             new_chunk->chunksize = strlen(content);
             new_chunk->next = current->next;
             new_chunk->prev = current;
