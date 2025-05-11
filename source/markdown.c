@@ -100,7 +100,7 @@ int markdown_insert(document *doc, uint64_t version, size_t pos, const char *con
 }
 
 int markdown_delete(document *doc, uint64_t version, size_t pos, size_t len) {
-    (void)doc; (void)version; (void)pos; (void)len;
+    //(void)doc; (void)version; (void)pos; (void)len;
     return SUCCESS;
 }
 
