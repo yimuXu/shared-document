@@ -75,6 +75,7 @@ int check_prev_char_newline(chunk* head, uint64_t pos) {
             return 0;
         }
     }///// 1 has \n, 0 not has \n
+    return 0;
 }
 
 
@@ -317,8 +318,8 @@ int markdown_newline(document *doc, int version, int pos) {
 }
 
 int markdown_heading(document *doc, uint64_t version, int level, size_t pos) {
-    const char* buf[level+2];//without \n
-    const char* buf1[level+3];//with \n
+    char* buf[level+2];//without \n
+    char* buf1[level+3];//with \n
     for(int i = 0; i < level; i++) {
         buf[i] = "#";
         buf[i+1] = "#";
