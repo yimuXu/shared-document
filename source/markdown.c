@@ -349,9 +349,9 @@ int markdown_heading(document *doc, uint64_t version, int level, size_t pos) {
     // }
     int is_newline = check_prev_char_newline(current, pos);
     if(is_newline == 1) {
-        markdown_insert(doc, version, pos, *buf);
+        markdown_insert(doc, version, pos, buf);
     }else {
-        markdown_insert(doc, version, pos, *buf1);
+        markdown_insert(doc, version, pos, buf1);
     }
     free(buf);
     free(buf1);
