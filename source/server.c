@@ -91,7 +91,23 @@ void* communication_thread(void* arg){
         unlink(s2c);
         return NULL;
     }
+    char* bufferdoc[256];//// need to be changed
+    write(s2cfd,bufferdoc, 256);
     //loop for send command of editing
+    while(1){
+        char* command[256];
+        read(c2sfd,command, 256);
+        char* commandtype = strtok(command, " ");
+        if(strcmp(commandtype, "INSERT") == 0){
+            // insert command
+           
+            int pos = atoi(strtok(NULL, " "));
+            char* content = strtok(NULL, " ");
+            // call the insert function //////////////////////
+            printf("insert %s at %d\n", content, pos);
+            // call insert function
+        }
+    }
     printf("success!\n");
     close(c2sfd);
     close(s2cfd);

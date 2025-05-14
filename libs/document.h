@@ -13,14 +13,17 @@ struct chunk{
     // TODO
     char* data;
     uint64_t chunksize;
+    uint64_t chunkversion;// each time you modify the chunk, you need to update the version
     chunk* next;
     chunk* prev;
+    int is_deleted;////1 deleted, 0 not deleted
 };
 
 typedef struct {
     // TODO
     chunk* head;
     uint64_t size;
+    uint64_t version;
 } document;
 
 // Functions from here onwards.
