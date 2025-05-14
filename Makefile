@@ -2,7 +2,7 @@
 CC := gcc
 CFLAGS := -Wall -Wextra -std=c11 -Ilibs
 
-all: server client markdown.o
+all: server client
 
 server: server.o source/markdown.o
     $(CC) $(CFLAGS) -o server server.o source/markdown.o
@@ -19,6 +19,10 @@ client.o: client.c
 source/markdown.o: source/markdown.c libs/markdown.h
     $(CC) $(CFLAGS) -c source/markdown.c -o source/markdown.o
 
+# Alias rule for compatibility
+markdown.o: source/markdown.o
+    @cp source/markdown.o markdown.o
+
 clean:
-    rm -f server client server.o client.o source/markdown.o
+    rm -f server client server.o client.o source/markdown.o markdown.o
 
