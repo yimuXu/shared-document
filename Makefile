@@ -2,7 +2,7 @@
 CC := gcc
 CFLAGS := -Wall -Wextra -std=c11 -Ilibs
 
-all: server client
+all: server client markdown.o
 
 server: server.o source/markdown.o
     $(CC) $(CFLAGS) -o server server.o source/markdown.o
