@@ -318,8 +318,8 @@ int markdown_newline(document *doc, int version, int pos) {
 }
 
 int markdown_heading(document *doc, uint64_t version, int level, size_t pos) {
-    char* buf[level+2];//without \n
-    char* buf1[level+3];//with \n
+    char* buf = malloc((level + 2) * sizeof(char));
+    char* buf1 = malloc((level + 3) * sizeof(char));
     for(int i = 0; i < level; i++) {
         buf[i] = "#";
         buf[i+1] = "#";
@@ -353,7 +353,8 @@ int markdown_heading(document *doc, uint64_t version, int level, size_t pos) {
     }else {
         markdown_insert(doc, version, pos, *buf1);
     }
-
+    free(buf);
+    free(buf1);
     return SUCCESS;
 }
 
