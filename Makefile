@@ -19,6 +19,7 @@ client.o: client.c
 source/markdown.o: source/markdown.c libs/markdown.h
     $(CC) $(CFLAGS) -c source/markdown.c -o source/markdown.o
 
+
 # Alias rule for compatibility
 markdown.o: source/markdown.o
     @cp source/markdown.o markdown.o
