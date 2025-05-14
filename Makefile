@@ -4,8 +4,8 @@ CFLAGS := -Wall -Wextra
 
 all: server client
 
-server: server.o source/markdown.o
-    $(CC) $(CFLAGS) -o server server.o source/markdown.o
+server: server.o markdown.o
+    $(CC) $(CFLAGS) -o server server.o markdown.o
 
 client: client.o
     $(CC) $(CFLAGS) -o client client.o
@@ -20,5 +20,4 @@ markdown.o: source/markdown.c libs/markdown.h
     $(CC) $(CFLAGS) -c source/markdown.c -o markdown.o
 
 clean:
-    rm -f server client server.o client.o source/markdown.o markdown.o
-
+    rm -f server client server.o client.o markdown.o
