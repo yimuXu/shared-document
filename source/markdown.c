@@ -321,14 +321,14 @@ int markdown_heading(document *doc, uint64_t version, int level, size_t pos) {
     char* buf = malloc((level + 2) * sizeof(char));
     char* buf1 = malloc((level + 3) * sizeof(char));
     for(int i = 0; i < level; i++) {
-        buf[i] = "#";
-        buf[i+1] = "#";
+        buf[i] = '#';
+        buf[i+1] = '#';
     }
-    buf1[0] = "\n";
-    buf[level] = " ";
-    buf1[level+1] = " ";
-    buf1[level+2] = "\0";
-    buf[level+1] = "\0";
+    buf1[0] = '\n';
+    buf[level] = ' ';
+    buf1[level+1] = ' ';
+    buf1[level+2] = '\0';
+    buf[level+1] = '\0';
     chunk* current = doc->head;
     // uint64_t current_pos;
     // chunk* current = find_chunk_at_logical_pos(current, pos, &current_pos);
