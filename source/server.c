@@ -114,6 +114,7 @@ void* communication_thread(void* arg){
     unlink(c2s);
     unlink(s2c);
     return NULL;
+    
 }
 
 

@@ -384,8 +384,10 @@ int markdown_blockquote(document *doc, uint64_t version, size_t pos) {
     }else {
         markdown_insert(doc, version, pos, buf1);
     }
+    
     return SUCCESS;
 }
+
 
 int markdown_ordered_list(document *doc, uint64_t version, size_t pos) {
     (void)doc; (void)version; (void)pos;
@@ -421,7 +423,7 @@ int markdown_horizontal_rule(document *doc, uint64_t version, size_t pos) {
 
 int markdown_link(document *doc, uint64_t version, size_t start, size_t end, const char *url) {
     (void)doc; (void)version; (void)start; (void)end; (void)url;
-    
+
     return SUCCESS;
 }
 
@@ -444,6 +446,7 @@ char *markdown_flatten(const document *doc) {
         }
         current = current->next;
     }
+
 
     return result;
 }
