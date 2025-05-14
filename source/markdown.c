@@ -431,12 +431,12 @@ char *markdown_flatten(const document *doc) {
     chunk* current = doc->head;
     size_t offset = 0;
     while(current){
-        if(current->chunkversion == doc->version) {
+        //if(current->chunkversion == doc->version) {
             for(size_t i = 0; i < current->chunksize; i++) {
                 result[offset + i] = current->data[i];
             }
             offset += current->chunksize;
-        }
+        //}
         current = current->next;
     }
 
