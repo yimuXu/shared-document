@@ -384,7 +384,7 @@ int markdown_blockquote(document *doc, uint64_t version, size_t pos) {
     }else {
         markdown_insert(doc, version, pos, buf1);
     }
-    
+
     return SUCCESS;
 }
 
@@ -438,12 +438,12 @@ char *markdown_flatten(const document *doc) {
     chunk* current = doc->head;
     size_t offset = 0;
     while(current){
-        if(current->is_deleted == 0 && current->chunkversion == 0) {
+        //if(current->is_deleted == 0 && current->chunkversion == 0) {
             for(size_t i = 0; i < current->chunksize; i++) {
                 result[offset + i] = current->data[i];
             }
             offset += current->chunksize;
-        }
+        //}
         current = current->next;
     }
 
