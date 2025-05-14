@@ -16,9 +16,8 @@ server.o: server.c libs/markdown.h
 client.o: client.c
     $(CC) $(CFLAGS) -c client.c -o client.o
 
-source/markdown.o: source/markdown.c libs/markdown.h
-    $(CC) $(CFLAGS) -c source/markdown.c -o source/markdown.o
-
+markdown.o: source/markdown.c libs/markdown.h
+    $(CC) $(CFLAGS) -c source/markdown.c -o markdown.o
 
 clean:
     rm -f server client server.o client.o source/markdown.o markdown.o

@@ -389,6 +389,7 @@ int markdown_blockquote(document *doc, uint64_t version, size_t pos) {
 
 int markdown_ordered_list(document *doc, uint64_t version, size_t pos) {
     (void)doc; (void)version; (void)pos;
+
     return SUCCESS;
 }
 
@@ -420,24 +421,14 @@ int markdown_horizontal_rule(document *doc, uint64_t version, size_t pos) {
 
 int markdown_link(document *doc, uint64_t version, size_t start, size_t end, const char *url) {
     (void)doc; (void)version; (void)start; (void)end; (void)url;
+    
     return SUCCESS;
 }
 
 // === Utilities ===
 void markdown_print(const document *doc, FILE *stream) {
     (void)doc; (void)stream;
-    // char* result = markdown_flatten(doc);
-    // FILE* fp = fopen(stream, "a");
-    // if(fp == -1) {
-    //     printf("Error opening file\n");
-    //     return;
-    // }
-    // //add the size of the document at the first with newline
-    // fprintf(stream, "%ld\n", doc->size);
-    // fprintf(stream, "%s", result);
-    // fclose(fp);
-    //chunk* current = doc->head;
-    
+
 }
 
 char *markdown_flatten(const document *doc) {
