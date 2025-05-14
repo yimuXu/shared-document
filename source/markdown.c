@@ -459,16 +459,16 @@ void markdown_increment_version(document *doc) {
 
 }
 
-int main(int argc, char** argv) {
+// int main(int argc, char** argv) {
 
-    document* doc = markdown_init();
-    markdown_insert(doc, 0, 0, "hello world");
-    markdown_insert(doc, 0, 0, "!");
-    // // printf("version: %ld\n", doc->version);
-    // markdown_increment_version(doc);
-    // markdown_update_chunk_version(doc);
-    char* result = markdown_flatten(doc);
-    printf("result: %s\n", result);
-    markdown_free(doc);
-    return 0;
-}
+//     document* doc = markdown_init();
+//     markdown_insert(doc, 0, 0, "hello world");
+//     markdown_insert(doc, 0, 0, "!");
+//     // // printf("version: %ld\n", doc->version);
+//     // markdown_increment_version(doc);
+//     // markdown_update_chunk_version(doc);
+//     char* result = markdown_flatten(doc);
+//     printf("result: %s\n", result);
+//     markdown_free(doc);
+//     return 0;
+// }
