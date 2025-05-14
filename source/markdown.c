@@ -36,15 +36,17 @@ void markdown_free(document *doc) {
 }
 
 //hepler function to find the chunk that contains the position
-chunk* find_chunk_at_logical_pos(chunk *current, size_t pos, size_t *out_offset) {
+chunk* find_chunk_at_logical_pos(document* doc, size_t pos, size_t *out_offset) {
     size_t logical_pos = 0;
+    chunk* current = doc->head;
     while (current) {
-        if (!current->is_deleted && current->chunkversion == 0) {
+        if (current->chunkversion == doc->version) {
             if (pos < logical_pos + current->chunksize) {
                 *out_offset = pos - logical_pos;
                 return current;
             }
             logical_pos += current->chunksize;
+            //printf("logical_pos: %ld\n",logical_pos);
         }
         if(logical_pos == pos){
             *out_offset = 0;
@@ -52,16 +54,23 @@ chunk* find_chunk_at_logical_pos(chunk *current, size_t pos, size_t *out_offset)
         }
         current = current->next;
     }
-    return NULL; // Not found
+    printf("current_pos is %ld\n",logical_pos);
+
+    if (current == NULL) {
+        *out_offset = 0;
+        return current;
+    }
+    return NULL; // insert at the beginning
 }
 
 //hepler function to check last element is newline
-int check_prev_char_newline(chunk* head, uint64_t pos) {
+int check_prev_char_newline(document* doc, uint64_t pos) {
+    
     if (pos == 0){
         return 1;
     }
     uint64_t current_pos;
-    chunk* current = find_chunk_at_logical_pos(head, pos, &current_pos);
+    chunk* current = find_chunk_at_logical_pos(doc, pos, &current_pos);
     if(current_pos == 0){
         if(current->data[current->chunksize-1] == '\n') {
             return 1;
@@ -80,7 +89,7 @@ int check_prev_char_newline(chunk* head, uint64_t pos) {
 
 
 //hepler function split a chunk into two chunks
-chunk* split_chunk(chunk* current, size_t pos, size_t len) {
+chunk* split_chunk(chunk* current, size_t pos, size_t len, document* doc) {
     //pos must be greater than 0!!!!!
     chunk* new_chunk = malloc(sizeof(chunk));
     new_chunk->is_deleted = 0;
@@ -90,7 +99,7 @@ chunk* split_chunk(chunk* current, size_t pos, size_t len) {
             new_chunk->data = malloc(current->chunksize - pos);
             memcpy(new_chunk->data, current->data + pos, current->chunksize - pos);
             new_chunk->chunksize = current->chunksize - pos;    
-            new_chunk->chunkversion = current->chunkversion;
+            new_chunk->chunkversion = doc->version + 1;
             new_chunk->next = current->next;
             new_chunk->next->prev = new_chunk;
             new_chunk->prev = current;
@@ -104,7 +113,7 @@ chunk* split_chunk(chunk* current, size_t pos, size_t len) {
             memcpy(new_chunk->data, current->data + pos, len);
             new_chunk->data[len] = '\0';
             new_chunk->chunksize = len;    
-            new_chunk->chunkversion = current->chunkversion;
+            new_chunk->chunkversion = doc->version;
             // last chunk
             chunk* new_chunk1 =malloc(sizeof(chunk));
             new_chunk1->is_deleted = 0;
@@ -130,6 +139,7 @@ chunk* split_chunk(chunk* current, size_t pos, size_t len) {
 int markdown_insert(document *doc, uint64_t version, size_t pos, const char *content) {
     //(void)doc; (void)version; (void)pos; (void)content;
     if(content == NULL) {
+        printf("content is NULL\n");
         return DELETE_POSITION;
     }
     
@@ -141,6 +151,7 @@ int markdown_insert(document *doc, uint64_t version, size_t pos, const char *con
         doc->head->data[strlen(content)] = '\0';
         doc->head->chunksize = strlen(content);
         doc->version = 0;
+        doc->size = strlen(content);
         return SUCCESS;
     }
     if(version != doc->version) {
@@ -148,38 +159,34 @@ int markdown_insert(document *doc, uint64_t version, size_t pos, const char *con
         return OUTDATE_VERSION;
     }
     if(pos > doc->size) {
+        printf("invalid cursor position!%ld,%ld\n",pos,doc->size);
         return INVALID_CURSOR_POS;
     }
     // check the version no sure if necessary
-    
     uint64_t current_pos;
-    //find the chunk that contains the position
-    // while (current != NULL && current_pos >= current->chunksize) {
-    //     if(current->is_deleted == 0 && current->chunkversion == 0) {/// chunk version may be greater
-    //         current_pos -= current->chunksize;
-    //     }
-    //     if(current_pos > 0 || (current_pos == 0 && current->is_deleted == 1)) {
-    //         current = current->next;
-    //     }else {
-    //         break;
-    //     }         
-    // }
-    chunk* current = find_chunk_at_logical_pos(doc->head, pos, &current_pos);
+    
+    
+    chunk* current = find_chunk_at_logical_pos(doc, pos, &current_pos);
+    //printf("current_pos after func: %ld\n",current_pos);
     // split the chunk if the position is in the middle of a chunk
     if (current_pos > 0 && current != NULL) {
-            current = split_chunk(current, current_pos,0);
+            current = split_chunk(current, current_pos,0, doc);
+            
             current_pos = 0;
     }
+    
     // insert
+    doc->size += strlen(content);
     if(current_pos == 0) {
         chunk* new_chunk = malloc(sizeof(chunk));
         new_chunk->is_deleted = 0;
         new_chunk->data = malloc(strlen(content)+1);
         memcpy(new_chunk->data, content,strlen(content));//////
         new_chunk->chunksize = strlen(content); 
-        new_chunk->chunkversion = current->chunkversion + 1;    ///////
+        new_chunk->chunkversion = doc->version + 1;
+        
         if(current->next == NULL && pos != 0) {
-
+            printf("insert at the end\n");
             new_chunk->next = NULL;
             // find last chunk
             chunk* last_chunk = current;
@@ -201,6 +208,7 @@ int markdown_insert(document *doc, uint64_t version, size_t pos, const char *con
         }
 
     }
+    
         
     return SUCCESS;
 }
@@ -215,6 +223,7 @@ int markdown_delete(document *doc, uint64_t version, size_t pos, size_t len) {
         return SUCCESS;
     }
     if(version != doc->version) {
+        printf("version is out of date!%ld,%ld\n",version,doc->version);
         return OUTDATE_VERSION;
     }
     if(pos > doc->size) {
@@ -238,46 +247,30 @@ int markdown_delete(document *doc, uint64_t version, size_t pos, size_t len) {
             t1->is_deleted = 1;
             t1 = t2;
         }
+        doc->size = 0;
         return SUCCESS;
     }
     // find the chunk that contains the position
-    chunk* current = doc->head;
-    chunk* last_chunk = doc->head;
-    uint64_t current_pos = pos;
-    uint64_t last_pos = pos + len;
-    //find the chunk that contains the position
-    while (current != NULL && current_pos >= current->chunksize) {
-        if(current->is_deleted == 0 && current->chunkversion == 0) {/// chunk version may be greater
-            current_pos -= current->chunksize;
-        }    
-        if(current_pos > 0 ||(current_pos == 0 && current->is_deleted == 1)) {
-            current = current->next;
-        }else {
-            break;
-        }        
-    }
-    // find the last chunk that contains the position
-    while (last_chunk != NULL && last_pos >= last_chunk->chunksize) {
-        last_pos -= last_chunk->chunksize;
-        if(last_pos > 0 ) {
-            last_chunk = last_chunk->next;
-        }else {
-            break;
-        }         
-    }
     
+
+    uint64_t current_pos;
+    uint64_t last_pos;
+    chunk* current = find_chunk_at_logical_pos(doc, pos, &current_pos);
+    chunk* last_chunk = find_chunk_at_logical_pos(doc, pos + len, &last_pos);
+    //find the chunk that contains the position
+
     // split the chunk if the position is in the middle of a chunk
     if(current != last_chunk){
 
         // get the prev and after chunk of deleted chunk
         if(current_pos > 0) {
-            current = split_chunk(current, current_pos, 0);
+            current = split_chunk(current, current_pos, 0, doc);
             current_pos = 0;
         }else if(current_pos == 0) {
             
         }
         if(last_pos > 0) {
-                last_chunk = split_chunk(last_chunk, last_pos, 0);
+                last_chunk = split_chunk(last_chunk, last_pos, 0, doc);
                 last_chunk = last_chunk->next;
                 last_pos = 0;
         }else if(last_pos == 0) {
@@ -296,7 +289,7 @@ int markdown_delete(document *doc, uint64_t version, size_t pos, size_t len) {
     }else if (current == last_chunk) {
         //current must be 3 parts 
         //printf("currentpos: %ld, len: %ld, size: %ld\n",current_pos,len,doc->size);
-        current = split_chunk(current, current_pos, len);
+        current = split_chunk(current, current_pos, len, doc);
 
         chunk *to_delete = current->next;
         to_delete->is_deleted = 1;
@@ -329,25 +322,7 @@ int markdown_heading(document *doc, uint64_t version, int level, size_t pos) {
     buf1[level+1] = ' ';
     buf1[level+2] = '\0';
     buf[level+1] = '\0';
-    chunk* current = doc->head;
-    // uint64_t current_pos;
-    // chunk* current = find_chunk_at_logical_pos(current, pos, &current_pos);
-    // if(current_pos == 0) {
-    //     if(current->data[current->chunksize-1] != '\n') {
-    //         markdown_insert(doc, version, pos+1, buf1);
-    //     }else {
-    //         markdown_insert(doc, version, pos, buf);
-    //     }
-        
-    // }else{
-    //     if(current->data[current_pos-1] != '\n') {
-    //         markdown_insert(doc, version, pos+1, buf1);
-    //     }else {
-    //         markdown_insert(doc, version, pos, buf);
-    
-    //     }        
-    // }
-    int is_newline = check_prev_char_newline(current, pos);
+    int is_newline = check_prev_char_newline(doc, pos);
     if(is_newline == 1) {
         markdown_insert(doc, version, pos, buf);
     }else {
@@ -378,7 +353,7 @@ int markdown_blockquote(document *doc, uint64_t version, size_t pos) {
     //(void)doc; (void)version; (void)pos;
     const char *buf = "> ";
     const char *buf1 = "\n> ";
-    int is_newline = check_prev_char_newline(doc->head, pos);
+    int is_newline = check_prev_char_newline(doc, pos);
     if(is_newline == 1) {
         markdown_insert(doc, version, pos, buf);
     }else {
@@ -412,7 +387,7 @@ int markdown_horizontal_rule(document *doc, uint64_t version, size_t pos) {
     //(void)doc; (void)version; (void)pos;
     const char *buf = "---\n";
     const char *buf1 = "\n---\n";
-    int is_newline = check_prev_char_newline(doc->head, pos);
+    int is_newline = check_prev_char_newline(doc, pos);
     if(is_newline == 1) {
         markdown_insert(doc, version, pos, buf);
     }else {
@@ -433,17 +408,35 @@ void markdown_print(const document *doc, FILE *stream) {
 
 }
 
+//get old version
+uint64_t markdown_get_size(const document *doc) {
+    if(doc == NULL) {
+        return 0;
+    }
+    uint64_t size = 0;
+    chunk* current = doc->head;
+    while (current != NULL) {
+        if(current->chunkversion == doc->version) {
+            size += current->chunksize;
+        }
+        current = current->next;
+    }
+    return size;
+}
+
 char *markdown_flatten(const document *doc) {
-    char* result = malloc(doc->size + 1);
+
+    uint64_t size = markdown_get_size(doc);
+    char* result = malloc(size + 1);
     chunk* current = doc->head;
     size_t offset = 0;
     while(current){
-        //if(current->is_deleted == 0 && current->chunkversion == 0) {
+        if(current->chunkversion == doc->version) {
             for(size_t i = 0; i < current->chunksize; i++) {
                 result[offset + i] = current->data[i];
             }
             offset += current->chunksize;
-        //}
+        }
         current = current->next;
     }
 
@@ -454,7 +447,7 @@ char *markdown_flatten(const document *doc) {
 // update the chunck version
 int markdown_update_chunk_version(document *doc) {
     chunk* current = doc->head;
-    while(current != NULL) {
+    while(current != NULL && current->is_deleted == 0) {
         current->chunkversion = doc->version;
         current = current->next;
     }
@@ -466,3 +459,16 @@ void markdown_increment_version(document *doc) {
 
 }
 
+// int main(int argc, char** argv) {
+
+//     document* doc = markdown_init();
+//     markdown_insert(doc, 0, 0, "hello world");
+//     markdown_insert(doc, 0, 0, "!");
+//     // // printf("version: %ld\n", doc->version);
+//     markdown_increment_version(doc);
+//     markdown_update_chunk_version(doc);
+//     char* result = markdown_flatten(doc);
+//     printf("result: %s\n", result);
+//     markdown_free(doc);
+//     return 0;
+// }
