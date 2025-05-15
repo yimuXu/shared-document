@@ -5,10 +5,11 @@
 #define DELETE_POSITION -2
 #define OUTDATE_VERSION -3
 
+char* bufdoc;
 // === Init and Free ===
 document *markdown_init(void) {
     document *doc = (document*)malloc(sizeof(document));
-    doc->text = (char*)malloc(sizeof(uint64_t));
+    doc->text = (char*)malloc(1024);
     doc->version = 0;
     doc->size = 0;
     doc->head = (chunk*)malloc(sizeof(chunk));
@@ -23,6 +24,7 @@ document *markdown_init(void) {
 }
 
 void markdown_free(document *doc) {
+    free(bufdoc);
     if (doc == NULL) {
         return;
     }
@@ -420,22 +422,24 @@ uint64_t markdown_get_size(const document *doc) {
 char *markdown_flatten(const document *doc) {
 
     uint64_t size = markdown_get_size(doc);
+    bufdoc = realloc(bufdoc, (size + 1));
     if (size == 0) {
-        return "";
+        return bufdoc;
     }
-    char* result = doc->text;
+    
     chunk* current = doc->head;
     size_t offset = 0;
     while(current){
         if(current->chunkversion == doc->version) {
             for(size_t i = 0; i < current->chunksize; i++) {
-                result[offset + i] = current->data[i];
+                bufdoc[offset + i] = current->data[i];
             }
             offset += current->chunksize;
         }
         current = current->next;
     }
-    return result;
+    bufdoc[size] = '\0';
+    return bufdoc;
 }
 
 // update the chunck version
