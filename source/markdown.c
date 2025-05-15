@@ -8,16 +8,17 @@
 // === Init and Free ===
 document *markdown_init(void) {
     document *doc = (document*)malloc(sizeof(document));
+    doc->text = (char*)malloc(sizeof(uint64_t));
     doc->version = 0;
-    doc->head = malloc(sizeof(chunk));
+    doc->size = 0;
+    doc->head = (chunk*)malloc(sizeof(chunk));
+    doc->head->data = NULL;
     doc->head->chunksize = 0;
     doc->head->chunkversion = doc->version;
-    doc->head->data = NULL;
-    doc->head->is_deleted = 0;
     doc->head->next = NULL;
     doc->head->prev = NULL;
-    doc->size = 0;
-    doc->version = 0;////to be changed
+    doc->head->is_deleted = 0;
+
     return doc;
 }
 
@@ -32,6 +33,7 @@ void markdown_free(document *doc) {
         free(current);
         current = next;
     }
+    free(doc->text);
     free(doc);
 }
 
@@ -150,7 +152,6 @@ int markdown_insert(document *doc, uint64_t version, size_t pos, const char *con
         strcpy(doc->head->data, content);
         doc->head->data[strlen(content)] = '\0';
         doc->head->chunksize = strlen(content);
-        doc->version = 0;
         doc->size = strlen(content);
         return SUCCESS;
     }
@@ -421,21 +422,18 @@ char *markdown_flatten(const document *doc) {
     if (size == 0) {
         return "";
     }
-    
-    char* result = malloc(size + 1);
+    char* result = doc->text;
     chunk* current = doc->head;
     size_t offset = 0;
     while(current){
-        //if(current->chunkversion == doc->version) {
+        if(current->chunkversion == doc->version) {
             for(size_t i = 0; i < current->chunksize; i++) {
                 result[offset + i] = current->data[i];
             }
             offset += current->chunksize;
-        //}
+        }
         current = current->next;
     }
-
-
     return result;
 }
 
@@ -451,6 +449,7 @@ int markdown_update_chunk_version(document *doc) {
 // === Versioning ===
 void markdown_increment_version(document *doc) {
     doc->version++;
+    markdown_update_chunk_version(doc);
 
 }
 

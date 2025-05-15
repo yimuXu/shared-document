@@ -2,7 +2,7 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
-#define _POSIX_C_SOURCE 199309L
+
 #include <signal.h>
 #include <sys/syscall.h>
 #include <unistd.h>

@@ -24,6 +24,7 @@ typedef struct {
     chunk* head;
     uint64_t size;
     uint64_t version;
+    char* text;
 } document;
 
 // Functions from here onwards.

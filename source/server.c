@@ -1,23 +1,22 @@
 // TODO: server code that manages the document and handles client instructions
-// #include <pthread.h>
-// #include <stdio.h>
-// #include <stdlib.h>
-// #include <signal.h>
-// #include <sys/syscall.h>
-// #include <unistd.h>
-// #include <sys/select.h>
-// #include <fcntl.h>
-// #include <string.h>
-// #include <sys/types.h>
-// #include <sys/stat.h>
-// #include <time.h>
-// #include <errno.h>
-// #include <sys/epoll.h>
-// #include <sys/wait.h>
+#include <pthread.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <signal.h>
+#include <sys/syscall.h>
+#include <unistd.h>
+#include <sys/select.h>
+#include <fcntl.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <time.h>
+#include <errno.h>
+#include <sys/epoll.h>
+#include <sys/wait.h>
 #include "markdown.h"
-// #include <bits/sigaction.h>
-//#include <asm-generic/siginfo.h>
-//#include <asm-generic/signal-defs.h>
+#include <bits/sigaction.h>
+
 
 #define MAX_CLIENT 10
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -32,6 +31,8 @@ struct clientpipe{
     struct epoll_event ev;
 
 };
+char* bufferdoc;
+uint64_t* size;  // size of document
 struct clientpipe* clients;
 int epollfd;
 document* doc;//// store the old document and send to client server side copy of document
@@ -69,21 +70,22 @@ int checkauthorisation(char* username, int c2sfd, int s2cfd){
 
 //make fifo for communication
 void *makefifo(void* arg, char* c2sname, char* s2cname){
-    (void) c2sname;(void) s2cname;
     // create FIFO for communication
     int* clientpid = (int*)arg;
     char name1[] = "FIFO_C2S_";
     char name2[] = "FIFO_S2C_";
-    char c2s[100];
-    char s2c[100];
-    sprintf(c2s, "%s%d",name1,*clientpid);
-    sprintf(s2c, "%s%d",name2,*clientpid);
-    unlink(c2s);
-    unlink(s2c);
+    char c2sn[100];
+    char s2cn[100];
+    sprintf(c2sn, "%s%d",name1,*clientpid);
+    sprintf(s2cn, "%s%d",name2,*clientpid);
+    c2sname = c2sn;
+    s2cname = s2cn;
+    unlink(c2sname);
+    unlink(s2cname);
     mode_t perm = 0666;
     
-    int rt1 = mkfifo(c2s, perm);
-    int rt2 = mkfifo(s2c, perm);
+    int rt1 = mkfifo(c2sname, perm);
+    int rt2 = mkfifo(s2cname, perm);
     if(rt1 == -1){
         printf("mkfifo error!\n");
         return NULL;
@@ -94,8 +96,7 @@ void *makefifo(void* arg, char* c2sname, char* s2cname){
     }
     printf("FIFO created!\n");
     
-    c2sname = c2s;
-    s2cname = s2c;
+
     return NULL;
 }
 
@@ -144,10 +145,10 @@ void deleteclient(int clientpid){
 }
 
 void* communication_thread(void* arg){
-    char*c2s;
-    char*s2c;
-    makefifo(arg, c2s, s2c);
+    char c2s[256];
+    char s2c[256];
     int* clientpid = (int*)arg;
+    makefifo(clientpid, c2s, s2c);
     // send signal to client
     kill(*clientpid, SIGRTMIN+1);
     // open FIFO
@@ -249,7 +250,16 @@ void* epoll_handle_thread(void* arg) {
     }
     return NULL;
 }
-
+// thread to broadcast message to all clients
+void broadcast_to_all_clients(const char* msg) {
+    pthread_mutex_lock(&mutex);
+    char buf[sizeof(uint64_t)];
+    for (int i = 0; i < count; ++i) {
+        sprintf(buf, "%ld\n%s", doc->size, msg);
+        write(clients[i].s2cfd, msg, strlen(msg) + sizeof(uint64_t) + 1);
+    }
+    pthread_mutex_unlock(&mutex);
+}
 
 int main(int argc, char** argv){
     // check if user input time interval for update document
@@ -279,8 +289,7 @@ int main(int argc, char** argv){
     sigaddset(&set, SIGRTMIN);
     sigprocmask(SIG_BLOCK, &set, NULL);    
 
-
-    struct epoll_event events[10];
+    time_t last_broadcast_time = time(NULL);
     while(1){
         struct timespec timeout = {0, 0};
         siginfo_t info;
@@ -296,10 +305,19 @@ int main(int argc, char** argv){
             pthread_create(&thread, NULL, communication_thread, &clientpid);      
             pthread_detach(thread);            
         }
+        // broadcast message to all clients every time_interval seconds
+        time_t current_time = time(NULL);
+        if(current_time - last_broadcast_time >= time_interval) {
+            last_broadcast_time = current_time;
+            markdown_increment_version(doc);
+            bufferdoc = markdown_flatten(doc);
+            broadcast_to_all_clients(bufferdoc);
+        }
         char quit[256];
         if(fgets(quit, 256, stdin) != NULL){
             if(strcmp(quit, "QUIT\n") == 0){
                 if( count == 0){
+                    free(clients);
                     //break;
                 }else{
                     printf("QUIT rejected, %d clients still connected.\n", count);
