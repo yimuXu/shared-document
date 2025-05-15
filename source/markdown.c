@@ -35,6 +35,7 @@ void markdown_free(document *doc) {
     }
     free(doc->text);
     free(doc);
+    doc = NULL;
 }
 
 //hepler function to find the chunk that contains the position
