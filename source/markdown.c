@@ -462,31 +462,31 @@ void markdown_increment_version(document *doc) {
 
 }
 
-int main(int argc, char** argv) {
-    char* result;
-    document* doc = markdown_init();
-    markdown_insert(doc, 0, 0, "hello world");
-    //printf("%ld,\n",doc->head->chunkversion);
-    markdown_increment_version(doc);
-    result = markdown_flatten(doc);
-    printf("result: %s\n", result);    
-    printf("---------------\n");
-    markdown_delete(doc, 1, 0, 11);
-    markdown_insert(doc, 1, 5, "aaa");
-    markdown_insert(doc, 1, 2, "!");
-    markdown_increment_version(doc);
-    result = markdown_flatten(doc);
-    printf("result: %s\n", result);
-    //printf("%d,%d,\n",doc->head->is_deleted,doc->head->next->is_deleted);
+// int main(int argc, char** argv) {
+//     char* result;
+//     document* doc = markdown_init();
+//     markdown_insert(doc, 0, 0, "hello world");
+//     //printf("%ld,\n",doc->head->chunkversion);
+//     markdown_increment_version(doc);
+//     result = markdown_flatten(doc);
+//     printf("result: %s\n", result);    
+//     printf("---------------\n");
+//     markdown_delete(doc, 1, 0, 11);
+//     markdown_insert(doc, 1, 5, "aaa");
+//     markdown_insert(doc, 1, 2, "!");
+//     markdown_increment_version(doc);
+//     result = markdown_flatten(doc);
+//     printf("result: %s\n", result);
+//     //printf("%d,%d,\n",doc->head->is_deleted,doc->head->next->is_deleted);
     
        
-    // markdown_increment_version(doc);
-    // result = markdown_flatten(doc);
-    // printf("result: %s\n", result);    
-    // printf("---------------\n");
-    // markdown_increment_version(doc);
+//     // markdown_increment_version(doc);
+//     // result = markdown_flatten(doc);
+//     // printf("result: %s\n", result);    
+//     // printf("---------------\n");
+//     // markdown_increment_version(doc);
 
-    free(result);
-    markdown_free(doc);
-    return 0;
-}
+//     free(result);
+//     markdown_free(doc);
+//     return 0;
+// }
