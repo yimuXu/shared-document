@@ -495,41 +495,41 @@ void markdown_increment_version(document *doc) {
 
 }
 
-int main(int argc, char** argv) {
-    char* result;
-    document* doc = markdown_init();
-    markdown_insert(doc, 0, 0, "hello world!");
-    //printf("%s:%ld,%s:%ld,\n",doc->head->data,doc->head->chunkversion,doc->head->next->data,doc->head->next->chunkversion);
-    //printf("%ld,\n",doc->head->chunkversion);
-    markdown_increment_version(doc);
-    result = markdown_flatten(doc);
-    printf("result: %s\n", result);    
-    printf("---------------\n");
+// int main(int argc, char** argv) {
+//     char* result;
+//     document* doc = markdown_init();
+//     markdown_insert(doc, 0, 0, "hello world!");
+//     //printf("%s:%ld,%s:%ld,\n",doc->head->data,doc->head->chunkversion,doc->head->next->data,doc->head->next->chunkversion);
+//     //printf("%ld,\n",doc->head->chunkversion);
+//     markdown_increment_version(doc);
+//     result = markdown_flatten(doc);
+//     printf("result: %s\n", result);    
+//     printf("---------------\n");
 
-    markdown_delete(doc, 1, 0, 12);  
-    int x = markdown_insert(doc, 1, 5, "!");
+//     markdown_delete(doc, 1, 0, 12);  
+//     int x = markdown_insert(doc, 1, 5, "!");
 
-    int y = markdown_insert(doc, 1, 5, "aaa");
+//     int y = markdown_insert(doc, 1, 5, "aaa");
 
-    markdown_insert(doc, 1, 5, "bbb");
-    markdown_insert(doc, 1, 5, "ccc");
-    markdown_insert(doc, 1, 5, "ddd");
-    markdown_increment_version(doc);
-    //printf("chunkversion: %ld\n", doc->head->next->chunkversion);
-    result = markdown_flatten(doc);
-    printf("result: %s\n", result);
-    //printf("%d,%d,\n",doc->head->is_deleted,doc->head->next->is_deleted);
-    printf("---------------\n");
-    markdown_delete(doc, 2, 3, 6);
-    //markdown_delete(doc, 2, 2, 4);   
-    markdown_increment_version(doc);
-    result = markdown_flatten(doc);
-    //printf("version: %ld\n",doc->version);
-    printf("result: %s\n", result);    
+//     markdown_insert(doc, 1, 5, "bbb");
+//     markdown_insert(doc, 1, 5, "ccc");
+//     markdown_insert(doc, 1, 5, "ddd");
+//     markdown_increment_version(doc);
+//     //printf("chunkversion: %ld\n", doc->head->next->chunkversion);
+//     result = markdown_flatten(doc);
+//     printf("result: %s\n", result);
+//     //printf("%d,%d,\n",doc->head->is_deleted,doc->head->next->is_deleted);
+//     printf("---------------\n");
+//     markdown_delete(doc, 2, 3, 6);
+//     //markdown_delete(doc, 2, 2, 4);   
+//     markdown_increment_version(doc);
+//     result = markdown_flatten(doc);
+//     //printf("version: %ld\n",doc->version);
+//     printf("result: %s\n", result);    
     
-    // markdown_increment_version(doc);
+//     // markdown_increment_version(doc);
 
-    free(result);
-    markdown_free(doc);
-    return 0;
-}
+//     free(result);
+//     markdown_free(doc);
+//     return 0;
+// }
