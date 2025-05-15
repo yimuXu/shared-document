@@ -1,21 +1,21 @@
 // TODO: server code that manages the document and handles client instructions
-#include <pthread.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <signal.h>
-#include <sys/syscall.h>
-#include <unistd.h>
-#include <sys/select.h>
-#include <fcntl.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <time.h>
-#include <errno.h>
-#include <sys/epoll.h>
-#include <sys/wait.h>
-#include "markdown.c"
-#include <signal.h>
+// #include <pthread.h>
+// #include <stdio.h>
+// #include <stdlib.h>
+// #include <signal.h>
+// #include <sys/syscall.h>
+// #include <unistd.h>
+// #include <sys/select.h>
+// #include <fcntl.h>
+// #include <string.h>
+// #include <sys/types.h>
+// #include <sys/stat.h>
+// #include <time.h>
+// #include <errno.h>
+// #include <sys/epoll.h>
+// #include <sys/wait.h>
+#include "markdown.h"
+// #include <bits/sigaction.h>
 //#include <asm-generic/siginfo.h>
 //#include <asm-generic/signal-defs.h>
 
@@ -69,6 +69,7 @@ int checkauthorisation(char* username, int c2sfd, int s2cfd){
 
 //make fifo for communication
 void *makefifo(void* arg, char* c2sname, char* s2cname){
+    (void) c2sname;(void) s2cname;
     // create FIFO for communication
     int* clientpid = (int*)arg;
     char name1[] = "FIFO_C2S_";

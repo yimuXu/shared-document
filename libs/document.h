@@ -6,10 +6,10 @@
  * You are allowed to and encouraged multiple helper functions and data structures, and make your code as modular as possible. 
  * Ensure you DO NOT change the name of document struct.
  */
-typedef struct chunk chunk;
+//typedef struct chunk chunk;
 
 
-struct chunk{
+typedef struct chunk{
     // TODO
     char* data;
     uint64_t chunksize;
@@ -17,7 +17,7 @@ struct chunk{
     chunk* next;
     chunk* prev;
     int is_deleted;////1 deleted, 0 not deleted
-};
+} chunk;
 
 typedef struct {
     // TODO

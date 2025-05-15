@@ -417,7 +417,11 @@ uint64_t markdown_get_size(const document *doc) {
 
 char *markdown_flatten(const document *doc) {
 
-    uint64_t size = doc->size;
+    uint64_t size = markdown_get_size(doc);
+    if (size == 0) {
+        return "";
+    }
+    
     char* result = malloc(size + 1);
     chunk* current = doc->head;
     size_t offset = 0;

@@ -1,14 +1,5 @@
 //TODO: client code that can send instructions to server.
-#include <stdio.h>
-#include <stdlib.h>
-#include <signal.h>
-#include <sys/syscall.h>
-#include <unistd.h>
-#include <sys/select.h>
-#include <time.h>
-#include <pthread.h>
-#include <fcntl.h>
-#include <string.h>
+#include "markdown.h"
 
 
 int main (int argc, char** argv){

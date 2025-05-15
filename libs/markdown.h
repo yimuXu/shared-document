@@ -1,11 +1,25 @@
 
+#include <pthread.h>
 #include <stdio.h>
-#include <stdint.h>
 #include <stdlib.h>
+#define _POSIX_C_SOURCE 199309L
+#include <signal.h>
+#include <sys/syscall.h>
+#include <unistd.h>
+#include <sys/select.h>
+#include <fcntl.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <time.h>
+#include <errno.h>
+#include <sys/epoll.h>
+#include <sys/wait.h>
+#include <bits/sigaction.h>
 #ifndef MARKDOWN_H
 #define MARKDOWN_H
-#include "document.h"  
+#include "document.h" 
+
 /**
  * The given file contains all the functions you will be required to complete. You are free to and encouraged to create
  * more helper functions to help assist you when creating the document. For the automated marking you can expect unit tests

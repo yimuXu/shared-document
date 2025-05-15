@@ -1,7 +1,7 @@
 # TODO: make sure the rules for server client and markdown filled!
 
 CC := gcc
-CFLAGS := -Wall -Wextra -std=c11 -Ilibs
+CFLAGS := -fsanitize=address -g -Wall -Wextra -std=c11 -Ilibs
 
 all: server client markdown
 
