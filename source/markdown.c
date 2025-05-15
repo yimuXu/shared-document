@@ -24,7 +24,7 @@ document *markdown_init(void) {
 }
 
 void markdown_free(document *doc) {
-    free(bufdoc);
+    //free(bufdoc);
     if (doc == NULL) {
         return;
     }
