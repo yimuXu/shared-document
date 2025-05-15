@@ -14,8 +14,8 @@ typedef struct chunk{
     char* data;
     uint64_t chunksize;
     uint64_t chunkversion;// each time you modify the chunk, you need to update the version
-    chunk* next;
-    chunk* prev;
+    struct chunk* next;
+    struct chunk* prev;
     int is_deleted;////1 deleted, 0 not deleted
 } chunk;
 
