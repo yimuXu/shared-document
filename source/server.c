@@ -12,6 +12,27 @@
 #include <sys/stat.h>
 #include <time.h>
 #include <errno.h>
+#include <sys/epoll.h>
+#include <sys/wait.h>
+#include "markdown.c"
+
+#define MAX_CLIENT 10
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+
+struct clientpipe{
+    int c2sfd;
+    int s2cfd;
+    char * c2sname;
+    char * s2cname;
+    char* username;
+    int clientpid;
+    struct epoll_event ev;
+
+};
+struct clientpipe* clients;
+int epollfd;
+document* doc;//// store the old document and send to client server side copy of document
+int count = 0; // count of clients
 
 int checkauthorisation(char* username, int c2sfd, int s2cfd){
     // check if username is valid
@@ -42,7 +63,8 @@ int checkauthorisation(char* username, int c2sfd, int s2cfd){
 
 }
 
-void* communication_thread(void* arg){
+//make fifo for communication
+void *makefifo(void* arg, char* c2sname, char* s2cname){
     // create FIFO for communication
     int* clientpid = (int*)arg;
     char name1[] = "FIFO_C2S_";
@@ -64,9 +86,62 @@ void* communication_thread(void* arg){
     if(rt2 == -1){
         printf("mkfifo error!\n");
         return NULL;
-    }else{
-        printf("FIFO_C2S created!\n");
     }
+    printf("FIFO created!\n");
+    
+    c2sname = c2s;
+    s2cname = s2c;
+}
+
+// add client
+void addclient(int c2sfd, int s2cfd, char* username, int clientpid, char* c2s, char* s2c){
+    pthread_mutex_lock(&mutex);
+    clients[count].c2sfd = c2sfd;
+    clients[count].s2cfd = s2cfd;
+    clients[count].username = malloc(strlen(username)+1);
+    strcpy(clients[count].username, username);
+    clients[count].clientpid = clientpid;
+    clients[count].c2sname = malloc(strlen(c2s)+1);
+    strcpy(clients[count].c2sname, c2s);
+    clients[count].s2cname = malloc(strlen(s2c)+1);
+    strcpy(clients[count].s2cname, s2c);
+    clients[count].ev.events = EPOLLIN;
+    clients[count].ev.data.fd = c2sfd;
+    epoll_ctl(epollfd, EPOLL_CTL_ADD, c2sfd, &clients[count].ev);
+    count++;
+    printf("client %d added in clients! and add event\n", clientpid);
+    pthread_mutex_unlock(&mutex);
+}
+// delete client from list
+void deleteclient(int clientpid){
+    pthread_mutex_lock(&mutex);
+    for(int i = 0; i < count; i++){
+        if(clients[i].clientpid == clientpid){
+            epoll_ctl(epollfd, EPOLL_CTL_DEL, clients[i].c2sfd, NULL);
+            free(clients[i].username);
+            close(clients[i].c2sfd);
+            close(clients[i].s2cfd);
+            unlink(clients[i].c2sname);
+            unlink(clients[i].s2cname);
+            free(clients[i].c2sname);
+            free(clients[i].s2cname);
+            for(int j = i; j < count-1; j++){
+                clients[j] = clients[j+1];
+            }
+            count--;
+            
+            printf("client %d deleted from clients!\n", clientpid);
+            break;
+        }
+    }
+    pthread_mutex_unlock(&mutex);
+}
+
+void* communication_thread(void* arg){
+    char*c2s;
+    char*s2c;
+    makefifo(arg, c2s, s2c);
+    int* clientpid = (int*)arg;
     // send signal to client
     kill(*clientpid, SIGRTMIN+1);
     // open FIFO
@@ -91,30 +166,81 @@ void* communication_thread(void* arg){
         unlink(s2c);
         return NULL;
     }
-    char* bufferdoc[256];//// need to be changed
-    write(s2cfd,bufferdoc, 256);
-    //loop for send command of editing
+
+    // add client to list// add event to epoll
+    addclient(c2sfd, s2cfd, username, *clientpid, c2s, s2c);
+
+    char* bufferdoc = markdown_flatten(doc);
+    write(s2cfd, doc, sizeof(doc));
+    // while(1){
+    //     char buffer[256];
+    //     read(c2sfd, buffer, 256);
+    //     printf("read from FIFO: %s\n", buffer);
+    //     //handle edit command
+    //     handle_edit_command(buffer, c2sfd);
+    // }
+    //printf("unlink!\n");
+    //delete client from list and from event
+    //deleteclient(*clientpid);// unlink has done in function
+    return NULL;
+
+}
+
+//function to handle editing commands from client
+int handle_edit_command(char* command, int c2sfd){
+    char* commandtype = strtok(command, " ");
+    if(strcmp(commandtype, "INSERT") == 0){
+        // insert command
+        int pos = atoi(strtok(NULL, " "));
+        char* content = strtok(NULL, "");
+        // call the insert function //////////////////////
+        printf("insert %s at %d\n", content, pos);
+        // call insert function
+    }else if(strcmp(commandtype, "DELETE") == 0){
+        // delete command
+        int pos = atoi(strtok(NULL, " "));
+        int len = atoi(strtok(NULL, " "));
+        // call the delete function //////////////////////
+        printf("delete %d at %d\n", len, pos);
+    }else if(strcmp(commandtype, "DISCONNECT\n") == 0){
+        // edit command
+        return -1; // disconnect client
+    }
+    return 0;
+
+}
+
+// thread handle epoll event
+void* epoll_handle_thread(void* arg) {
+    int epollfd = *(int*)arg;
+
+    struct epoll_event events[10];
     while(1){
-        char* command[256];
-        read(c2sfd,command, 256);
-        char* commandtype = strtok(*command, " ");
-        if(strcmp(commandtype, "INSERT") == 0){
-            // insert command
-           
-            int pos = atoi(strtok(NULL, " "));
-            char* content = strtok(NULL, " ");
-            // call the insert function //////////////////////
-            printf("insert %s at %d\n", content, pos);
-            // call insert function
+        int n = epoll_wait(epollfd, events, 10, 0);
+        if(n == -1){
+            perror("epoll_wait");
+            return NULL;
+        }
+        for(int i = 0; i < n; i++){
+            if(events[i].events & EPOLLIN){
+                // read from FIFO
+                int c2sfd = events[i].data.fd;
+                char buffer[256];
+                read(c2sfd, buffer, 256);
+                printf("events read from FIFO: %s\n", buffer);
+                // handle edit command
+                int result = handle_edit_command(buffer, c2sfd);
+                if(result == -1) {
+                    // disconnect client
+                    printf("client disconnected!\n");
+                    epoll_ctl(epollfd, EPOLL_CTL_DEL, c2sfd, NULL);
+                    deleteclient(clients[i].clientpid);
+                    
+                }
+            }
         }
     }
-    printf("success!\n");
-    close(c2sfd);
-    close(s2cfd);
-    unlink(c2s);
-    unlink(s2c);
     return NULL;
-    
 }
 
 
@@ -126,28 +252,57 @@ int main(int argc, char** argv){
     }
     int serverpid = getpid();
     printf("Server PID: %d\n", serverpid);
-    //////////////////////int time_interval = atoi(argv[1]);
+    int time_interval = atoi(argv[1]);
+
+    // create struct to store client information
+    struct clientpipe* clients = malloc(sizeof(struct clientpipe) * MAX_CLIENT);
+    int count = 0; // count of clients
+
+    int epollfd = epoll_create1(0);
+    if (epollfd == -1) {
+        perror("epoll_create1");
+        return 1;
+    }    
+    pthread_t hdevent;
+    pthread_create(hdevent, NULL, epoll_handle_thread, &epollfd);
+    pthread_detach(hdevent);
 
     sigset_t set;
-    siginfo_t info;
     sigemptyset(&set);
     sigaddset(&set, SIGRTMIN);
-    sigprocmask(SIG_BLOCK, &set, NULL);
-    
-    // loop to accept the new client 
-    pthread_t thread;
-    int infopid = sigwaitinfo(&set, &info);
-    if (infopid == -1){
-        printf("sigwaitinfo error!\n");
-        return 1;
+    sigprocmask(SIG_BLOCK, &set, NULL);    
+
+
+    struct epoll_event events[10];
+    while(1){
+        struct timespec timeout = {0, 0};
+        siginfo_t info;
+
+        int sig = sigtimedwait(&set, &info, &timeout);
+        int clientpid = info.si_pid;
+        if (sig == -1 && errno != EAGAIN) {
+            perror("sigtimedwait");
+            return 1;
+        }else if (sig == SIGRTMIN) {
+            pthread_t thread;
+        // initilaize thread
+            pthread_create(&thread, NULL, communication_thread, &clientpid);      
+            pthread_detach(thread);            
+        }
+        char quit[256];
+        if(fgets(quit, 256, stdin) != NULL){
+            if(strcmp(quit, "QUIT\n") == 0){
+                if( count == 0){
+                    //break;
+                }else{
+                    printf("QUIT rejected, %d clients still connected.\n", count);
+                }
+            }
+        }
     }
-    int clientpid = info.si_pid;
-    // initilaize thread
-    pthread_create(&thread, NULL, communication_thread, &clientpid);      
-    pthread_join(thread, NULL);  
-
-    
-
+    //pthread_join(thread, NULL);  
+    // close epoll instance
+    close(epollfd);
     return 0;
     
 }

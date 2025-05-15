@@ -195,6 +195,7 @@ int markdown_insert(document *doc, uint64_t version, size_t pos, const char *con
             return SUCCESS;
         }else if(current->next != NULL && pos !=0) {
             // create a new chunk
+            printf("insert in the middle\n");
             new_chunk->next = current->next;
             new_chunk->prev = current;
             current->next->prev = new_chunk;
@@ -244,20 +245,20 @@ int markdown_delete(document *doc, uint64_t version, size_t pos, size_t len) {
         chunk* t2 = doc->head;
         while(t1 != NULL) {
             t2 = t1->next;
-            t1->is_deleted = 1;
+            if(t1->chunkversion == doc->version) {
+                t1->is_deleted = 1;
+            }
+            
             t1 = t2;
         }
         doc->size = 0;
         return SUCCESS;
     }
     // find the chunk that contains the position
-    
-
     uint64_t current_pos;
     uint64_t last_pos;
     chunk* current = find_chunk_at_logical_pos(doc, pos, &current_pos);
     chunk* last_chunk = find_chunk_at_logical_pos(doc, pos + len, &last_pos);
-    //find the chunk that contains the position
 
     // split the chunk if the position is in the middle of a chunk
     if(current != last_chunk){
@@ -266,38 +267,28 @@ int markdown_delete(document *doc, uint64_t version, size_t pos, size_t len) {
         if(current_pos > 0) {
             current = split_chunk(current, current_pos, 0, doc);
             current_pos = 0;
-        }else if(current_pos == 0) {
-            
         }
         if(last_pos > 0) {
                 last_chunk = split_chunk(last_chunk, last_pos, 0, doc);
                 last_chunk = last_chunk->next;
                 last_pos = 0;
-        }else if(last_pos == 0) {
-
-        }        
-        // delete the chunk
+        }
+        // mark the chunk as deleted
         chunk* temp1 = current->next;
         chunk* temp2 = current->next;
         while(temp1 != last_chunk) {
             temp1 = temp1->next;
-            temp2->is_deleted = 1;
+            if(temp2->chunkversion == doc->version) {
+                temp2->is_deleted = 1;
+            }
             temp2 = temp1;
         }
-        current->next = last_chunk;
-        last_chunk->prev = current;
+
     }else if (current == last_chunk) {
         //current must be 3 parts 
         //printf("currentpos: %ld, len: %ld, size: %ld\n",current_pos,len,doc->size);
         current = split_chunk(current, current_pos, len, doc);
-
-        chunk *to_delete = current->next;
-        to_delete->is_deleted = 1;
-        current->next = to_delete->next;
-        if (to_delete->next != NULL) {
-            to_delete->next->prev = current;
-        }
-        current->next->prev = current;
+        current->next->is_deleted == 1;
     }
     return SUCCESS;
 }
@@ -459,16 +450,19 @@ void markdown_increment_version(document *doc) {
 
 }
 
-// int main(int argc, char** argv) {
-
-//     document* doc = markdown_init();
-//     markdown_insert(doc, 0, 0, "hello world");
-//     markdown_insert(doc, 0, 0, "!");
-//     // // printf("version: %ld\n", doc->version);
-//     // markdown_increment_version(doc);
-//     // markdown_update_chunk_version(doc);
-//     char* result = markdown_flatten(doc);
-//     printf("result: %s\n", result);
-//     markdown_free(doc);
-//     return 0;
-// }
+int main(int argc, char** argv) {
+    printf("hello world\n");
+    document* doc = markdown_init();
+    markdown_insert(doc, 0, 0, "hello world");
+    
+    // // printf("version: %ld\n", doc->version);
+    markdown_increment_version(doc);
+    markdown_update_chunk_version(doc);
+    markdown_insert(doc, 1, 5, "!");
+        markdown_increment_version(doc);
+    markdown_update_chunk_version(doc);
+    char* result = markdown_flatten(doc);
+    printf("result: %s\n", result);
+    markdown_free(doc);
+    return 0;
+}

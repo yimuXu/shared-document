@@ -63,6 +63,11 @@ int main (int argc, char** argv){
         printf("read!\n");
     }else if(strcmp(authorisation, "write\n") == 0){
         printf("write!\n");
+        char buffer[256];
+        while (fgets(buffer, sizeof(buffer), stdin) != NULL) {
+            // write to FIFO
+            write(c2sfd, buffer, strlen(buffer)+1);
+        }
     }else{
         printf("error!\n");//debug
         return 1;
