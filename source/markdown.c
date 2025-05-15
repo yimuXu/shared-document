@@ -5,7 +5,7 @@
 #define DELETE_POSITION -2
 #define OUTDATE_VERSION -3
 
-char* bufdoc;
+char* bufdoc = NULL;
 // === Init and Free ===
 document *markdown_init(void) {
     document *doc = (document*)malloc(sizeof(document));
@@ -422,12 +422,12 @@ uint64_t markdown_get_size(const document *doc) {
 char *markdown_flatten(const document *doc) {
 
     uint64_t size = markdown_get_size(doc);
-    bufdoc = realloc(bufdoc, (size + 1));
-    if (size == 0) {
+    if(size == 0) {
+        bufdoc = malloc(1);
         bufdoc[0] = '\0';
         return bufdoc;
     }
-    
+    bufdoc = realloc(bufdoc, (size + 1));
     chunk* current = doc->head;
     size_t offset = 0;
     while(current){
