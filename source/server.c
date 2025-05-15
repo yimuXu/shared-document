@@ -1,11 +1,11 @@
 // TODO: server code that manages the document and handles client instructions
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
 #include <sys/syscall.h>
 #include <unistd.h>
 #include <sys/select.h>
-#include <pthread.h>
 #include <fcntl.h>
 #include <string.h>
 #include <sys/types.h>
@@ -15,6 +15,9 @@
 #include <sys/epoll.h>
 #include <sys/wait.h>
 #include "markdown.c"
+#include <signal.h>
+//#include <asm-generic/siginfo.h>
+//#include <asm-generic/signal-defs.h>
 
 #define MAX_CLIENT 10
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -36,6 +39,7 @@ int count = 0; // count of clients
 
 int checkauthorisation(char* username, int c2sfd, int s2cfd){
     // check if username is valid
+    (void) s2cfd;(void) c2sfd;
     FILE* fp = fopen("roles.txt", "r");
     if(fp == NULL){
         printf("open roles.txt error!\n");
@@ -91,6 +95,7 @@ void *makefifo(void* arg, char* c2sname, char* s2cname){
     
     c2sname = c2s;
     s2cname = s2c;
+    return NULL;
 }
 
 // add client
@@ -171,6 +176,7 @@ void* communication_thread(void* arg){
     addclient(c2sfd, s2cfd, username, *clientpid, c2s, s2c);
 
     char* bufferdoc = markdown_flatten(doc);
+    (void)bufferdoc;
     write(s2cfd, doc, sizeof(doc));
     // while(1){
     //     char buffer[256];
@@ -188,7 +194,7 @@ void* communication_thread(void* arg){
 
 //function to handle editing commands from client
 int handle_edit_command(char* command, int c2sfd){
-    char* commandtype = strtok(command, " ");
+    char* commandtype = strtok(command, " ");(void)c2sfd;
     if(strcmp(commandtype, "INSERT") == 0){
         // insert command
         int pos = atoi(strtok(NULL, " "));
@@ -264,7 +270,7 @@ int main(int argc, char** argv){
         return 1;
     }    
     pthread_t hdevent;
-    pthread_create(hdevent, NULL, epoll_handle_thread, &epollfd);
+    pthread_create(&hdevent, NULL, epoll_handle_thread, &epollfd);
     pthread_detach(hdevent);
 
     sigset_t set;

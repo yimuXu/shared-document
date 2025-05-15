@@ -288,7 +288,7 @@ int markdown_delete(document *doc, uint64_t version, size_t pos, size_t len) {
         //current must be 3 parts 
         //printf("currentpos: %ld, len: %ld, size: %ld\n",current_pos,len,doc->size);
         current = split_chunk(current, current_pos, len, doc);
-        current->next->is_deleted == 1;
+        current->next->is_deleted = 1;
     }
     return SUCCESS;
 }
