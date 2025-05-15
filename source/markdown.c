@@ -427,7 +427,7 @@ char *markdown_flatten(const document *doc) {
         bufdoc[0] = '\0';
         return bufdoc;
     }
-    bufdoc = realloc(bufdoc, (size + 1));
+    bufdoc = malloc(size + 1);
     chunk* current = doc->head;
     size_t offset = 0;
     while(current){
