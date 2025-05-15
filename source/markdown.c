@@ -424,6 +424,7 @@ char *markdown_flatten(const document *doc) {
     uint64_t size = markdown_get_size(doc);
     bufdoc = realloc(bufdoc, (size + 1));
     if (size == 0) {
+        bufdoc[0] = '\0';
         return bufdoc;
     }
     
