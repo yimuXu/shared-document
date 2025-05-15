@@ -16,7 +16,7 @@ typedef struct chunk{
     uint64_t chunkversion;// each time you modify the chunk, you need to update the version
     struct chunk* next;
     struct chunk* prev;
-    int is_deleted;////1 deleted, 0 not deleted
+    uint64_t is_deleted;////1 deleted, 0 not deleted
 } chunk;
 
 typedef struct {
