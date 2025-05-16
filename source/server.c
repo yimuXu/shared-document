@@ -1,17 +1,17 @@
 // TODO: server code that manages the document and handles client instructions
 #define _POSIX_C_SOURCE 200809L
+#include <signal.h>
+#include <unistd.h>
+#include <time.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <signal.h>
 #include <sys/syscall.h>
-#include <unistd.h>
 #include <sys/select.h>
 #include <fcntl.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <time.h>
 #include <errno.h>
 #include <sys/epoll.h>
 #include <sys/wait.h>
