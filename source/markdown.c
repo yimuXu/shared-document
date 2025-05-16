@@ -1,4 +1,5 @@
 #include "../libs/markdown.h"
+#include <ctype.h>
 
 #define SUCCESS 0 
 #define INVALID_CURSOR_POS -1
@@ -115,6 +116,7 @@ int check_prev_char_newline(document* doc, uint64_t pos) {
 
 //helper function to check what followed element is
 int check_next_char(document* doc, uint64_t version, uint64_t pos, char* content){
+    (void)version;
     uint64_t current_pos = 0;
     chunk* current = find_chunk_at_logical_pos(doc,pos ,&current_pos);
 
