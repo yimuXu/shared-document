@@ -107,6 +107,33 @@ int check_prev_char_newline(document* doc, uint64_t pos) {
     return 0;
 }
 
+//helper function to check what followed element is
+int check_next_char(document* doc, uint64_t version, uint64_t pos, char* content){
+    uint64_t* current_pos;
+    chunk* current = find_chunk_at_logical_pos(doc,pos ,current_pos);
+    if(current_pos != 0){
+        if(current->data[*current_pos + 1] == content[0]){
+            return 1;
+        }else{
+            return 0;
+        }
+    }else if(current_pos == 0){
+        if(current == NULL){
+            return 0;
+        }else if (current != NULL){
+            if (current->next != NULL){
+                if(current->next->data[0] == content[0]){
+                    return 1;
+                }else {
+                    return 0;
+                }
+            }else if(current->next == NULL){
+                return 0;
+            }
+        }
+    }
+}
+
 
 //hepler function split a chunk into two chunks
 chunk* split_chunk(chunk* current, size_t pos, size_t len, document* doc) {
@@ -348,7 +375,7 @@ int markdown_heading(document *doc, uint64_t version, int level, size_t pos) {
     buf[level+1] = '\0';
     int is_newline = check_prev_char_newline(doc, pos);
     markdown_insert(doc, version, pos, buf);
-    if(is_newline == 1) {
+    if(is_newline != 1) {
         markdown_newline(doc, version, pos);
     }
     free(buf);
@@ -388,10 +415,10 @@ int markdown_blockquote(document *doc, uint64_t version, size_t pos) {
 int markdown_ordered_list(document *doc, uint64_t version, size_t pos) {
     (void)doc; (void)version; (void)pos;
     int is_newline = check_prev_char_newline(doc, pos);
-    char buf[3];
+    char buf[2];
     int i;
-    snprintf(buf, sizeof(buf), "%d. ", i);
-    markdown_insert(doc, version, pos, "1. ");
+    snprintf(buf, sizeof(buf), "%d.", i);
+    markdown_insert(doc, version, pos, "1.");
     if(is_newline != 1) {
         markdown_newline(doc, version, pos);
     }
@@ -403,12 +430,11 @@ int markdown_ordered_list(document *doc, uint64_t version, size_t pos) {
 int markdown_unordered_list(document *doc, uint64_t version, size_t pos) {
     //(void)doc; (void)version; (void)pos;
     const char *buf = "- ";
-    const char *buf1 = "\n- ";
+
     int is_newline = check_prev_char_newline(doc, pos);
-    if(is_newline == 1) {
-        markdown_insert(doc, version, pos, buf);
-    }else {
-        markdown_insert(doc, version, pos, buf1);
+    markdown_insert(doc, version, pos, buf);
+    if(is_newline != 1) {
+        markdown_newline(doc, version, pos);
     }
     return SUCCESS;
 }
@@ -423,13 +449,16 @@ int markdown_code(document *doc, uint64_t version, size_t start, size_t end) {
 
 int markdown_horizontal_rule(document *doc, uint64_t version, size_t pos) {
     //(void)doc; (void)version; (void)pos;
-    const char *buf = "---\n";
-    const char *buf1 = "\n---\n";
+    const char *buf = "---";
+    char* newline = '\n';
+    int is_newline = check_next_char(doc, version, newline);
+    if(is_newline == 0){
+        markdown_insert(doc,version,pos,newline);
+    }
+    markdown_insert(doc, version, pos, buf);
     int is_newline = check_prev_char_newline(doc, pos);
     if(is_newline == 1) {
         markdown_insert(doc, version, pos, buf);
-    }else {
-        markdown_insert(doc, version, pos, buf1);
     }
     return SUCCESS;
 }
