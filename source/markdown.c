@@ -414,7 +414,7 @@ int markdown_blockquote(document *doc, uint64_t version, size_t pos) {
     const char *buf = "> ";
     int is_newline = check_prev_char_newline(doc, pos);
     markdown_insert(doc, version, pos, buf);
-    if(is_newline == 1) {
+    if(is_newline == 0) {
         markdown_newline(doc, version, pos);   
     }
 
