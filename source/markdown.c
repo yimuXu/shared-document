@@ -109,29 +109,39 @@ int check_prev_char_newline(document* doc, uint64_t pos) {
 
 //helper function to check what followed element is
 int check_next_char(document* doc, uint64_t version, uint64_t pos, char* content){
-    uint64_t* current_pos;
-    chunk* current = find_chunk_at_logical_pos(doc,pos ,current_pos);
-    if(current_pos != 0){
-        if(current->data[*current_pos + 1] == content[0]){
+    uint64_t current_pos = 0;
+    chunk* current = find_chunk_at_logical_pos(doc,pos ,&current_pos);
+    
+    if(current == NULL || current->data == NULL){
+        return 0;
+    }
+    if(current_pos != 0 && current_pos < current->chunksize){
+        if(current->data[current_pos + 1] == content[0]){
             return 1;
         }else{
             return 0;
         }
     }else if(current_pos == 0){
+        
         if(current == NULL){
             return 0;
         }else if (current != NULL){
-            if (current->next != NULL){
+            //printf("current next: %s\n",current->next);
+            if (current->next == NULL || current->next->data == NULL){
+                printf("imein\n");
+                return 0;
+
+            }else if(current->next != NULL  && current->next->data == NULL){
                 if(current->next->data[0] == content[0]){
                     return 1;
                 }else {
                     return 0;
-                }
-            }else if(current->next == NULL){
-                return 0;
+                }                
+                
             }
         }
     }
+    return 0;
 }
 
 
@@ -224,7 +234,6 @@ int markdown_insert(document *doc, uint64_t version, size_t pos, const char *con
     
     
     chunk* current = find_chunk_at_logical_pos(doc, pos, &current_pos);
-    //printf("current_pos after func: %ld\n",current_pos);
     // split the chunk if the position is in the middle of a chunk
     if (current_pos > 0 && current != NULL) {
             current = split_chunk(current, current_pos,0, doc);
@@ -240,6 +249,7 @@ int markdown_insert(document *doc, uint64_t version, size_t pos, const char *con
         memcpy(new_chunk->data, content,strlen(content));//////
         new_chunk->chunksize = strlen(content); 
         new_chunk->chunkversion = doc->version + 1;
+
         printf("version: %ld\n",new_chunk->chunkversion);
         
         if(current->next == NULL && pos != 0) {/////add to the end
@@ -249,6 +259,7 @@ int markdown_insert(document *doc, uint64_t version, size_t pos, const char *con
             chunk* last_chunk = current;
             new_chunk->prev = last_chunk;
             last_chunk->next = new_chunk;
+            new_chunk->next = NULL;
             return SUCCESS;
         }else if(current != NULL && pos !=0) {// insert in the middle
             // create a new chunk
@@ -416,7 +427,7 @@ int markdown_ordered_list(document *doc, uint64_t version, size_t pos) {
     (void)doc; (void)version; (void)pos;
     int is_newline = check_prev_char_newline(doc, pos);
     char buf[3];
-    char* i;
+    char* i = "1";
     char* spa = " ";
     snprintf(buf, sizeof(buf), "%s.", i);
     markdown_insert(doc, version, pos, "1.");
@@ -458,6 +469,7 @@ int markdown_horizontal_rule(document *doc, uint64_t version, size_t pos) {
     const char *buf = "---";
     char* newline = "\n";
     int next_newline = check_next_char(doc, version, pos, newline);
+    printf("check char: %d",next_newline);
     if(next_newline == 0){
         markdown_insert(doc,version,pos,newline);
     }
@@ -473,8 +485,8 @@ int markdown_link(document *doc, uint64_t version, size_t start, size_t end, con
     //(void)doc; (void)version; (void)start; (void)end; (void)url;
     const char *buf = "[";
     size_t size = strlen(url) + 4;
-    char* buf1 = malloc(size * sizeof(char));
-    buf1[size]= '\0';
+    char* buf1 = malloc(size);
+    buf1[size-1]= '\0';
     snprintf(buf1, size, "](%s)", url);
     markdown_insert(doc, version, start-1, buf);
     markdown_insert(doc, version, end, buf1);
@@ -532,41 +544,67 @@ void markdown_increment_version(document *doc) {
 
 }
 
-// int main(int argc, char** argv) {
-//     char* result;
-//     document* doc = markdown_init();
-//     markdown_insert(doc, 0, 0, "hello world!");
-//     //printf("%s:%ld,%s:%ld,\n",doc->head->data,doc->head->chunkversion,doc->head->next->data,doc->head->next->chunkversion);
-//     //printf("%ld,\n",doc->head->chunkversion);
-//     markdown_increment_version(doc);
-//     result = markdown_flatten(doc);
-//     printf("result: %s\n", result);    
-//     printf("---------------\n");
+int main(int argc, char** argv) {
+    // char* result;
+    // document* doc = markdown_init();
+    // markdown_insert(doc, 0, 0, "hello world!");
+    // //printf("%s:%ld,%s:%ld,\n",doc->head->data,doc->head->chunkversion,doc->head->next->data,doc->head->next->chunkversion);
+    // //printf("%ld,\n",doc->head->chunkversion);
+    // markdown_increment_version(doc);
+    // result = markdown_flatten(doc);
+    // printf("result: %s\n", result);    
+    // printf("---------------\n");
 
-//     markdown_delete(doc, 1, 0, 12);  
-//     int x = markdown_insert(doc, 1, 5, "!");
+    // markdown_delete(doc, 1, 0, 12);  
+    // int x = markdown_insert(doc, 1, 5, "!");
 
-//     int y = markdown_insert(doc, 1, 5, "aaa");
+    // int y = markdown_insert(doc, 1, 5, "aaa");
 
-//     markdown_insert(doc, 1, 5, "bbb");
-//     markdown_insert(doc, 1, 12, "ccc");
-//     markdown_insert(doc, 1, 12, "ddd");
-//     markdown_increment_version(doc);
-//     //printf("chunkversion: %ld\n", doc->head->next->chunkversion);
-//     result = markdown_flatten(doc);
-//     printf("result: %s\n", result);
-//     //printf("%d,%d,\n",doc->head->is_deleted,doc->head->next->is_deleted);
-//     printf("---------------\n");
-//     markdown_delete(doc, 2, 3, 6);
-//     //markdown_delete(doc, 2, 2, 4);   
-//     markdown_increment_version(doc);
-//     result = markdown_flatten(doc);
-//     //printf("version: %ld\n",doc->version);
-//     printf("result: %s\n", result);    
+    // markdown_insert(doc, 1, 5, "bbb");
+    // markdown_insert(doc, 1, 12, "ccc");
+    // markdown_insert(doc, 1, 12, "ddd");
+    // markdown_increment_version(doc);
+    // //printf("chunkversion: %ld\n", doc->head->next->chunkversion);
+    // result = markdown_flatten(doc);
+    // printf("result: %s\n", result);
+    // //printf("%d,%d,\n",doc->head->is_deleted,doc->head->next->is_deleted);
+    // printf("---------------\n");
+    // markdown_delete(doc, 2, 3, 6);
+    // //markdown_delete(doc, 2, 2, 4);   
+    // markdown_increment_version(doc);
+    // result = markdown_flatten(doc);
+    // //printf("version: %ld\n",doc->version);
+    // printf("result: %s\n", result);    
     
-//     // markdown_increment_version(doc);
+    // // markdown_increment_version(doc);
 
-//     free(result);
-//     markdown_free(doc);
-//     return 0;
-// }
+    // free(result);
+    // markdown_free(doc);
+    printf("=== Horizontal Rule Test ===\n");
+    document* doc_hr = markdown_init();
+    markdown_insert(doc_hr, 0, 0, "above");
+    markdown_increment_version(doc_hr);
+    printf("df\n");
+    markdown_horizontal_rule(doc_hr, 1, 5);
+    printf("dfd\n");
+    markdown_increment_version(doc_hr);
+    markdown_insert(doc_hr, 2, 8, "below");
+    markdown_increment_version(doc_hr);
+    char* result_hr = markdown_flatten(doc_hr);
+    printf("result: %s\n", result_hr); // Expected: "above\n---\nbelow"
+    free(result_hr);
+    markdown_free(doc_hr);
+    printf("---------------------------\n");
+    printf("=== Link Test ===\n");
+    document* doc_link = markdown_init();
+    markdown_insert(doc_link, 0, 0, "GitHub");
+    markdown_increment_version(doc_link);
+    markdown_link(doc_link, 1, 7, 7, "https://github.com");
+    markdown_increment_version(doc_link);
+    char* result_link = markdown_flatten(doc_link);
+    printf("result: %s\n", result_link); // Expected: "GitHub[](https://github.com)"
+    free(result_link);
+    markdown_free(doc_link);
+    printf("-----------------\n");
+    return 0;
+}
