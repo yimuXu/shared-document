@@ -487,7 +487,7 @@ int markdown_link(document *doc, uint64_t version, size_t start, size_t end, con
     char* buf1 = malloc(size);
     buf1[size-1]= '\0';
     snprintf(buf1, size, "](%s)", url);
-    markdown_insert(doc, version, start-1, buf);
+    markdown_insert(doc, version, start, buf);
     markdown_insert(doc, version, end, buf1);
     free(buf1);
     return SUCCESS;
