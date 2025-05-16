@@ -16,8 +16,6 @@
 #include <sys/epoll.h>
 #include <sys/wait.h>
 #include "markdown.h"
-#include <bits/sigaction.h>
-
 
 #define MAX_CLIENT 10
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
