@@ -415,10 +415,16 @@ int markdown_blockquote(document *doc, uint64_t version, size_t pos) {
 int markdown_ordered_list(document *doc, uint64_t version, size_t pos) {
     (void)doc; (void)version; (void)pos;
     int is_newline = check_prev_char_newline(doc, pos);
-    char buf[2];
-    int i;
-    snprintf(buf, sizeof(buf), "%d.", i);
+    char buf[3];
+    char* i;
+    char* spa = " ";
+    snprintf(buf, sizeof(buf), "%s.", i);
     markdown_insert(doc, version, pos, "1.");
+    int is_space = check_next_char(doc, version, pos, spa);
+    if(is_space == 0){
+        markdown_insert(doc, version, pos, spa);
+    }
+    markdown_insert(doc, version, pos, buf);
     if(is_newline != 1) {
         markdown_newline(doc, version, pos);
     }
@@ -450,9 +456,9 @@ int markdown_code(document *doc, uint64_t version, size_t start, size_t end) {
 int markdown_horizontal_rule(document *doc, uint64_t version, size_t pos) {
     //(void)doc; (void)version; (void)pos;
     const char *buf = "---";
-    char* newline = '\n';
-    int is_newline = check_next_char(doc, version, newline);
-    if(is_newline == 0){
+    char* newline = "\n";
+    int next_newline = check_next_char(doc, version, pos, newline);
+    if(next_newline == 0){
         markdown_insert(doc,version,pos,newline);
     }
     markdown_insert(doc, version, pos, buf);
