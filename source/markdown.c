@@ -91,13 +91,13 @@ int check_prev_char_newline(document* doc, uint64_t pos) {
     }
     uint64_t current_pos;
     chunk* current = find_chunk_at_logical_pos(doc, pos, &current_pos);
-    if(current_pos == 0){
+    if(current_pos == 0 && current->data != NULL){
         if(current->data[current->chunksize-1] == '\n') {
             return 1;
         }else {
             return 0;
         }
-    }else if(current_pos > 0) {
+    }else if(current_pos > 0 && current->data != NULL) {
         if(current->data[current_pos-1] == '\n') {
             return 1;
         }else {
