@@ -640,33 +640,33 @@ void markdown_increment_version(document *doc) {
 
 }
 
-int main() {
-    document* doc = markdown_init();
+// int main() {
+//     document* doc = markdown_init();
 
-    // Insert three ordered list items
-    markdown_insert(doc,0,0,"rice noodle dumpling burger");
+//     // Insert three ordered list items
+//     markdown_insert(doc,0,0,"rice noodle dumpling burger");
     
-    markdown_increment_version(doc);
-    char* result = markdown_flatten(doc);
-    printf("Ordered list result:\n%s\n", result);
-    markdown_ordered_list(doc, 1, 0);
-    markdown_increment_version(doc);
-    printf("------------\n");
-    markdown_ordered_list(doc, 2, 7);
-    markdown_increment_version(doc);
+//     markdown_increment_version(doc);
+//     char* result = markdown_flatten(doc);
+//     printf("Ordered list result:\n%s\n", result);
+//     markdown_ordered_list(doc, 1, 0);
+//     markdown_increment_version(doc);
+//     printf("------------\n");
+//     markdown_ordered_list(doc, 2, 7);
+//     markdown_increment_version(doc);
 
-    markdown_ordered_list(doc, doc->version, 18);
-    //markdown_increment_version(doc);
-    //markdown_ordered_list(doc, doc->version, 26);
-    markdown_increment_version(doc);
-    markdown_ordered_list(doc, doc->version, 30);
-    markdown_increment_version(doc);
-    markdown_delete(doc, doc->version,7,10);
-    markdown_increment_version(doc);
-    result = markdown_flatten(doc);
-    printf("Ordered list result:\n%s\n", result);
+//     markdown_ordered_list(doc, doc->version, 18);
+//     //markdown_increment_version(doc);
+//     //markdown_ordered_list(doc, doc->version, 26);
+//     markdown_increment_version(doc);
+//     markdown_ordered_list(doc, doc->version, 30);
+//     markdown_increment_version(doc);
+//     markdown_delete(doc, doc->version,7,10);
+//     markdown_increment_version(doc);
+//     result = markdown_flatten(doc);
+//     printf("Ordered list result:\n%s\n", result);
 
-    free(result);
-    markdown_free(doc);
-    return 0;
-}
+//     free(result);
+//     markdown_free(doc);
+//     return 0;
+// }
