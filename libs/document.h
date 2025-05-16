@@ -17,6 +17,7 @@ typedef struct chunk{
     struct chunk* next;
     struct chunk* prev;
     uint64_t is_deleted;////1 deleted, 0 not deleted
+    int order_num;
 } chunk;
 
 typedef struct {
