@@ -465,7 +465,7 @@ int markdown_code(document *doc, uint64_t version, size_t start, size_t end) {
 
 int markdown_horizontal_rule(document *doc, uint64_t version, size_t pos) {
     //(void)doc; (void)version; (void)pos;
-    const char *buf = "---";
+    const char *buf = "------";
     char* newline = "\n";
     int next_newline = check_next_char(doc, version, pos, newline);
     printf("check char: %d",next_newline);
