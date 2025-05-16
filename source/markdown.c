@@ -421,6 +421,15 @@ int markdown_blockquote(document *doc, uint64_t version, size_t pos) {
     return SUCCESS;
 }
 
+// find last newline before pos
+char* find_last_order_number(document* doc, uint64_t pos){
+    int* current_pos = -1;
+    chunk* current = find_chunk_at_logical_pos(doc,pos,current_pos);
+    if(current == NULL){
+        return NULL;
+    }
+    
+}
 
 int markdown_ordered_list(document *doc, uint64_t version, size_t pos) {
     (void)doc; (void)version; (void)pos;
@@ -428,6 +437,9 @@ int markdown_ordered_list(document *doc, uint64_t version, size_t pos) {
     char buf[3];
     char* i = "1";
     char* spa = " "; 
+    //check 
+    i = find_last_order_number(doc,pos);
+    if(i ==)
     snprintf(buf, sizeof(buf), "%s.", i);
     markdown_insert(doc, version, pos, "1.");
     int is_space = check_next_char(doc, version, pos, spa);
