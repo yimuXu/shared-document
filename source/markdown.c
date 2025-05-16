@@ -85,12 +85,11 @@ chunk* find_chunk_at_logical_pos(document* doc, size_t pos, size_t *out_offset) 
 
 //hepler function to check last element is newline
 int check_prev_char_newline(document* doc, uint64_t pos) {
-    
-    if (pos == 0){
+    uint64_t current_pos = 0;
+    chunk* current = find_chunk_at_logical_pos(doc, pos, &current_pos);    
+    if (pos == 0 || current == NULL){
         return 1;
     }
-    uint64_t current_pos;
-    chunk* current = find_chunk_at_logical_pos(doc, pos, &current_pos);
     if(current_pos == 0 && current->data != NULL){
         if(current->data[current->chunksize-1] == '\n') {
             return 1;
