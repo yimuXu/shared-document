@@ -19,6 +19,7 @@ document *markdown_init(void) {
     doc->head->next = NULL;
     doc->head->prev = NULL;
     doc->head->is_deleted = 0;
+    doc->head->order_num = 0;
 
     return doc;
 }
@@ -60,7 +61,7 @@ chunk* find_chunk_at_logical_pos(document* doc, size_t pos, size_t *out_offset) 
     size_t logical_pos = 0;
     chunk* current = doc->head;
     while (current) {
-        if (current->chunkversion == doc->version) {
+        if (current->chunkversion == doc->version && (current->is_deleted == 0 || current->is_deleted > doc->version)) {
             if (pos < logical_pos + current->chunksize) {
                 *out_offset = pos - logical_pos;
                 return current;
@@ -90,6 +91,12 @@ int check_prev_char_newline(document* doc, uint64_t pos) {
     if (pos == 0 || current == NULL){
         return 1;
     }
+    while(current){
+        if(current->chunkversion == doc->version && (current->is_deleted == 0 || current->is_deleted > doc->version)){
+            break;    
+        }
+        current= current->prev;
+    }
     if(current_pos == 0 && current->data != NULL){
         if(current->data[current->chunksize-1] == '\n') {
             return 1;
@@ -110,46 +117,49 @@ int check_prev_char_newline(document* doc, uint64_t pos) {
 int check_next_char(document* doc, uint64_t version, uint64_t pos, char* content){
     uint64_t current_pos = 0;
     chunk* current = find_chunk_at_logical_pos(doc,pos ,&current_pos);
-    
+
+    while(current){
+        if(current->chunkversion == doc->version && (current->is_deleted == 0 || current->is_deleted > doc->version)){
+            break;    
+        }
+        current= current->next;
+    }
     if(current == NULL || current->data == NULL){
         return 0;
     }
     if(current_pos != 0 && current_pos < current->chunksize){
-        if(current->data[current_pos + 1] == content[0]){
+        
+        if(current->data[current_pos] == content[0]){
+            
             return 1;
         }else{
             return 0;
         }
     }else if(current_pos == 0){
-        
-        if(current == NULL){
+        //printf("current next: %s\n",current->next);
+        if (current->next == NULL || current->next->data == NULL){
+            //printf("imein\n");
             return 0;
-        }else if (current != NULL){
-            //printf("current next: %s\n",current->next);
-            if (current->next == NULL || current->next->data == NULL){
-                printf("imein\n");
-                return 0;
 
-            }else if(current->next != NULL  && current->next->data == NULL){
-                if(current->next->data[0] == content[0]){
-                    return 1;
-                }else {
-                    return 0;
-                }                
-                
-            }
+        }else if(current->next != NULL  && current->next->data == NULL){
+            if(current->next->data[0] == content[0]){
+                return 1;
+            }else {
+                return 0;
+            }                
+            
         }
+        
     }
     return 0;
 }
-
 
 //hepler function split a chunk into two chunks
 chunk* split_chunk(chunk* current, size_t pos, size_t len, document* doc) {
     //pos must be greater than 0!!!!!
     chunk* new_chunk = malloc(sizeof(chunk));
     new_chunk->is_deleted = current->is_deleted;
-
+    new_chunk->order_num = 0;
     if(len < current->chunksize) {  // split in two 
         //printf("pos: %ld\n",pos);
         if(pos!= 0 && (len == 0 || len >= current->chunksize-pos)) {
@@ -209,6 +219,14 @@ int markdown_insert(document *doc, uint64_t version, size_t pos, const char *con
         printf("content is NULL\n");
         return DELETE_POSITION;
     }
+    // for order_list
+    int ordernum = 0;
+    if(strlen(content) == 2){
+        if(isdigit((unsigned char)content[0]) && content[1] == '.'){
+            ordernum = content[0] -'0';
+
+        }
+    }
     
     if(doc == NULL) {
         doc = markdown_init();
@@ -218,6 +236,7 @@ int markdown_insert(document *doc, uint64_t version, size_t pos, const char *con
         doc->head->data[strlen(content)] = '\0';
         doc->head->chunksize = strlen(content);
         doc->size = strlen(content);
+        doc->head->order_num = ordernum;
         return SUCCESS;
     }
     if(version != doc->version) {
@@ -248,11 +267,11 @@ int markdown_insert(document *doc, uint64_t version, size_t pos, const char *con
         memcpy(new_chunk->data, content,strlen(content));//////
         new_chunk->chunksize = strlen(content); 
         new_chunk->chunkversion = doc->version + 1;
-
-        printf("version: %ld\n",new_chunk->chunkversion);
+        new_chunk->order_num = ordernum;
+        //printf("version: %ld\n",new_chunk->chunkversion);
         
         if(current->next == NULL && pos != 0) {/////add to the end
-            printf("insert at the end\n");
+            //printf("insert at the end\n");
             new_chunk->next = NULL;
             // find last chunk
             chunk* last_chunk = current;
@@ -262,13 +281,13 @@ int markdown_insert(document *doc, uint64_t version, size_t pos, const char *con
             return SUCCESS;
         }else if(current != NULL && pos !=0) {// insert in the middle
             // create a new chunk
-            printf("insert in the middle\n");
+            //printf("insert in the middle\n");
             new_chunk->next = current->next;
             new_chunk->prev = current;
             current->next->prev = new_chunk;
             current->next = new_chunk;
         }else if(pos == 0) {// insert at the beginning
-            printf("insert at the beginning\n");
+            //printf("insert at the beginning\n");
             new_chunk->next = current;
             new_chunk->prev = NULL;
             current->prev = new_chunk;
@@ -422,35 +441,99 @@ int markdown_blockquote(document *doc, uint64_t version, size_t pos) {
 }
 
 // find last newline before pos
-char* find_last_order_number(document* doc, uint64_t pos){
-    int* current_pos = -1;
-    chunk* current = find_chunk_at_logical_pos(doc,pos,current_pos);
-    if(current == NULL){
-        return NULL;
+int find_last_order_number(document* doc, uint64_t pos){
+    size_t current_pos = 0;
+    chunk* current = find_chunk_at_logical_pos(doc,pos,&current_pos);
+    int new_line = check_prev_char_newline(doc, pos);
+
+    if(current == NULL || pos == 0){
+        return 0;
     }
+    if(new_line == 1){
+        current = current->prev->prev;
+    }    
+    chunk* temp = current;
+    chunk* result = NULL;
+    while(temp){
+        printf("imin ordernum:%ld\n",temp->chunkversion);
+        if(temp->data && temp-> chunksize == 2 && temp->order_num != 0 &&
+            temp->chunkversion == doc->version &&
+            (temp->is_deleted == 0 || temp->is_deleted > doc->version)){
+                printf("i find a num\n");
+                return temp->order_num;
+            }    
+        if(temp->data && temp-> chunksize == 1 && temp->data[0] == '\n' &&
+            temp->chunkversion == doc->version &&
+            (temp->is_deleted == 0 || temp->is_deleted > doc->version)){
+            
+            result = temp;
+            break;
+        }
+        temp = temp->prev;
+    }
+    if(result == NULL || result->data == NULL){
+        return 0;
+    }else if(result->order_num != 0){
+        return result->order_num;
+    }
+    return 0;
     
+
+}
+
+// modify followed order function
+int modify_order_number(document* doc, uint64_t version, uint64_t pos, char start){
+    size_t current_pos = 0;
+    chunk* current = find_chunk_at_logical_pos(doc,pos,&current_pos);
+    if(current == NULL || current->data == NULL){
+        return 1;////ERROR
+    }
+    int count = 1;
+    size_t modifypos = pos; // for modify order num
+    while(current){
+        if(current->order_num != 0 && current->chunkversion == doc->version&& (current->is_deleted == 0 || current->is_deleted > doc->version)){
+            markdown_delete(doc, version, modifypos,2);
+            char num[3];
+            snprintf(num, 3,"%c.",start + count);
+            markdown_insert(doc,version,pos, num);
+            count++;
+        }
+        current = current->next;
+    }
+    return 0;
 }
 
 int markdown_ordered_list(document *doc, uint64_t version, size_t pos) {
     (void)doc; (void)version; (void)pos;
+    if(version != doc->version){
+        printf("outdate version.\n");
+        return OUTDATE_VERSION;
+    }
     int is_newline = check_prev_char_newline(doc, pos);
     char buf[3];
-    char* i = "1";
+    buf[2] = '\0';
+    char i = '0';
     char* spa = " "; 
     //check 
-    i = find_last_order_number(doc,pos);
-    if(i ==)
-    snprintf(buf, sizeof(buf), "%s.", i);
-    markdown_insert(doc, version, pos, "1.");
+    int o = find_last_order_number(doc,pos);
+    
+    i = o + '0' + 1;
+    printf(" i :%c\n",i);
+    snprintf(buf, sizeof(buf), "%c.", i);
+    printf(" buf :%s\n",buf);
+    modify_order_number(doc,version, pos, i);
+    
     int is_space = check_next_char(doc, version, pos, spa);
     if(is_space == 0){
+        printf("print spac\n");
         markdown_insert(doc, version, pos, spa);
     }
     markdown_insert(doc, version, pos, buf);
     if(is_newline != 1) {
         markdown_newline(doc, version, pos);
     }
-    
+
+
 
     return SUCCESS;
 }
@@ -554,6 +637,33 @@ void markdown_increment_version(document *doc) {
 
 }
 
-// int main(int argc, char** argv) {
+// int main() {
+//     document* doc = markdown_init();
+
+//     // Insert three ordered list items
+//     markdown_insert(doc,0,0,"rice noodle dumpling burger");
+    
+//     markdown_increment_version(doc);
+//     char* result = markdown_flatten(doc);
+//     printf("Ordered list result:\n%s\n", result);
+//     markdown_ordered_list(doc, 1, 0);
+//     markdown_increment_version(doc);
+//     printf("------------\n");
+//     markdown_ordered_list(doc, 2, 7);
+//     markdown_increment_version(doc);
+
+//     markdown_ordered_list(doc, doc->version, 18);
+//     //markdown_increment_version(doc);
+//     //markdown_ordered_list(doc, doc->version, 26);
+//     markdown_increment_version(doc);
+//     markdown_ordered_list(doc, doc->version, 30);
+//     markdown_increment_version(doc);
+//     markdown_delete(doc, doc->version,7,9);
+//     markdown_increment_version(doc);
+//     result = markdown_flatten(doc);
+//     printf("Ordered list result:\n%s\n", result);
+
+//     free(result);
+//     markdown_free(doc);
 //     return 0;
 // }
