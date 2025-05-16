@@ -427,7 +427,7 @@ int markdown_ordered_list(document *doc, uint64_t version, size_t pos) {
     int is_newline = check_prev_char_newline(doc, pos);
     char buf[3];
     char* i = "1";
-    char* spa = " ";
+    char* spa = " "; 
     snprintf(buf, sizeof(buf), "%s.", i);
     markdown_insert(doc, version, pos, "1.");
     int is_space = check_next_char(doc, version, pos, spa);
@@ -500,7 +500,6 @@ void markdown_print(const document *doc, FILE *stream) {
 }
 
 
-
 char *markdown_flatten(const document *doc) {
 
     uint64_t size = markdown_get_size(doc);
@@ -544,66 +543,5 @@ void markdown_increment_version(document *doc) {
 }
 
 // int main(int argc, char** argv) {
-//     // char* result;
-//     // document* doc = markdown_init();
-//     // markdown_insert(doc, 0, 0, "hello world!");
-//     // //printf("%s:%ld,%s:%ld,\n",doc->head->data,doc->head->chunkversion,doc->head->next->data,doc->head->next->chunkversion);
-//     // //printf("%ld,\n",doc->head->chunkversion);
-//     // markdown_increment_version(doc);
-//     // result = markdown_flatten(doc);
-//     // printf("result: %s\n", result);    
-//     // printf("---------------\n");
-
-//     // markdown_delete(doc, 1, 0, 12);  
-//     // int x = markdown_insert(doc, 1, 5, "!");
-
-//     // int y = markdown_insert(doc, 1, 5, "aaa");
-
-//     // markdown_insert(doc, 1, 5, "bbb");
-//     // markdown_insert(doc, 1, 12, "ccc");
-//     // markdown_insert(doc, 1, 12, "ddd");
-//     // markdown_increment_version(doc);
-//     // //printf("chunkversion: %ld\n", doc->head->next->chunkversion);
-//     // result = markdown_flatten(doc);
-//     // printf("result: %s\n", result);
-//     // //printf("%d,%d,\n",doc->head->is_deleted,doc->head->next->is_deleted);
-//     // printf("---------------\n");
-//     // markdown_delete(doc, 2, 3, 6);
-//     // //markdown_delete(doc, 2, 2, 4);   
-//     // markdown_increment_version(doc);
-//     // result = markdown_flatten(doc);
-//     // //printf("version: %ld\n",doc->version);
-//     // printf("result: %s\n", result);    
-    
-//     // // markdown_increment_version(doc);
-
-//     // free(result);
-//     // markdown_free(doc);
-//     printf("=== Horizontal Rule Test ===\n");
-//     document* doc_hr = markdown_init();
-//     markdown_insert(doc_hr, 0, 0, "above");
-//     markdown_increment_version(doc_hr);
-//     printf("df\n");
-//     markdown_horizontal_rule(doc_hr, 1, 5);
-//     printf("dfd\n");
-//     markdown_increment_version(doc_hr);
-//     markdown_insert(doc_hr, 2, 8, "below");
-//     markdown_increment_version(doc_hr);
-//     char* result_hr = markdown_flatten(doc_hr);
-//     printf("result: %s\n", result_hr); // Expected: "above\n---\nbelow"
-//     free(result_hr);
-//     markdown_free(doc_hr);
-//     printf("---------------------------\n");
-//     printf("=== Link Test ===\n");
-//     document* doc_link = markdown_init();
-//     markdown_insert(doc_link, 0, 0, "GitHub");
-//     markdown_increment_version(doc_link);
-//     markdown_link(doc_link, 1, 7, 7, "https://github.com");
-//     markdown_increment_version(doc_link);
-//     char* result_link = markdown_flatten(doc_link);
-//     printf("result: %s\n", result_link); // Expected: "GitHub[](https://github.com)"
-//     free(result_link);
-//     markdown_free(doc_link);
-//     printf("-----------------\n");
 //     return 0;
 // }
