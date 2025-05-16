@@ -1,0 +1,15 @@
+*
+
+!.gitignore
+!Makefile
+!libs/
+!libs/document.h
+!libs/markdown.h
+!source/
+!source/client.c
+!source/server.c
+!source/markdown.c
+!source/roles.txt
+!.vscode
+!.vscode/launch.json
+!.vscode/settings.json
