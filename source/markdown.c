@@ -340,24 +340,19 @@ int markdown_newline(document *doc, int version, int pos) {
 
 int markdown_heading(document *doc, uint64_t version, int level, size_t pos) {
     char* buf = malloc((level + 2) * sizeof(char));
-    char* buf1 = malloc((level + 3) * sizeof(char));
     for(int i = 0; i < level; i++) {
         buf[i] = '#';
-        buf[i+1] = '#';
+        
     }
-    buf1[0] = '\n';
     buf[level] = ' ';
-    buf1[level+1] = ' ';
-    buf1[level+2] = '\0';
     buf[level+1] = '\0';
     int is_newline = check_prev_char_newline(doc, pos);
+    markdown_insert(doc, version, pos, buf);
     if(is_newline == 1) {
-        markdown_insert(doc, version, pos, buf);
-    }else {
-        markdown_insert(doc, version, pos, buf1);
+        markdown_newline(doc, version, pos);
     }
     free(buf);
-    free(buf1);
+
     return SUCCESS;
 }
 
@@ -380,12 +375,10 @@ int markdown_italic(document *doc, uint64_t version, size_t start, size_t end) {
 int markdown_blockquote(document *doc, uint64_t version, size_t pos) {
     //(void)doc; (void)version; (void)pos;
     const char *buf = "> ";
-    const char *buf1 = "\n> ";
     int is_newline = check_prev_char_newline(doc, pos);
+    markdown_insert(doc, version, pos, buf);
     if(is_newline == 1) {
-        markdown_insert(doc, version, pos, buf);
-    }else {
-        markdown_insert(doc, version, pos, buf1);
+        markdown_newline(doc, version, pos);   
     }
 
     return SUCCESS;
@@ -394,12 +387,21 @@ int markdown_blockquote(document *doc, uint64_t version, size_t pos) {
 
 int markdown_ordered_list(document *doc, uint64_t version, size_t pos) {
     (void)doc; (void)version; (void)pos;
+    int is_newline = check_prev_char_newline(doc, pos);
+    char buf[3];
+    int i;
+    snprintf(buf, sizeof(buf), "%d. ", i);
+    markdown_insert(doc, version, pos, "1. ");
+    if(is_newline != 1) {
+        markdown_newline(doc, version, pos);
+    }
+    
 
     return SUCCESS;
 }
 
 int markdown_unordered_list(document *doc, uint64_t version, size_t pos) {
-    (void)doc; (void)version; (void)pos;
+    //(void)doc; (void)version; (void)pos;
     const char *buf = "- ";
     const char *buf1 = "\n- ";
     int is_newline = check_prev_char_newline(doc, pos);
@@ -445,7 +447,7 @@ int markdown_link(document *doc, uint64_t version, size_t start, size_t end, con
     return SUCCESS;
 }
 
-// === Utilities ===
+// === Utilities === 
 void markdown_print(const document *doc, FILE *stream) {
     (void)doc; (void)stream;
 
@@ -495,41 +497,41 @@ void markdown_increment_version(document *doc) {
 
 }
 
-// int main(int argc, char** argv) {
-//     char* result;
-//     document* doc = markdown_init();
-//     markdown_insert(doc, 0, 0, "hello world!");
-//     //printf("%s:%ld,%s:%ld,\n",doc->head->data,doc->head->chunkversion,doc->head->next->data,doc->head->next->chunkversion);
-//     //printf("%ld,\n",doc->head->chunkversion);
-//     markdown_increment_version(doc);
-//     result = markdown_flatten(doc);
-//     printf("result: %s\n", result);    
-//     printf("---------------\n");
+int main(int argc, char** argv) {
+    char* result;
+    document* doc = markdown_init();
+    markdown_insert(doc, 0, 0, "hello world!");
+    //printf("%s:%ld,%s:%ld,\n",doc->head->data,doc->head->chunkversion,doc->head->next->data,doc->head->next->chunkversion);
+    //printf("%ld,\n",doc->head->chunkversion);
+    markdown_increment_version(doc);
+    result = markdown_flatten(doc);
+    printf("result: %s\n", result);    
+    printf("---------------\n");
 
-//     markdown_delete(doc, 1, 0, 12);  
-//     int x = markdown_insert(doc, 1, 5, "!");
+    markdown_delete(doc, 1, 0, 12);  
+    int x = markdown_insert(doc, 1, 5, "!");
 
-//     int y = markdown_insert(doc, 1, 5, "aaa");
+    int y = markdown_insert(doc, 1, 5, "aaa");
 
-//     markdown_insert(doc, 1, 5, "bbb");
-//     markdown_insert(doc, 1, 5, "ccc");
-//     markdown_insert(doc, 1, 5, "ddd");
-//     markdown_increment_version(doc);
-//     //printf("chunkversion: %ld\n", doc->head->next->chunkversion);
-//     result = markdown_flatten(doc);
-//     printf("result: %s\n", result);
-//     //printf("%d,%d,\n",doc->head->is_deleted,doc->head->next->is_deleted);
-//     printf("---------------\n");
-//     markdown_delete(doc, 2, 3, 6);
-//     //markdown_delete(doc, 2, 2, 4);   
-//     markdown_increment_version(doc);
-//     result = markdown_flatten(doc);
-//     //printf("version: %ld\n",doc->version);
-//     printf("result: %s\n", result);    
+    markdown_insert(doc, 1, 5, "bbb");
+    markdown_insert(doc, 1, 12, "ccc");
+    markdown_insert(doc, 1, 12, "ddd");
+    markdown_increment_version(doc);
+    //printf("chunkversion: %ld\n", doc->head->next->chunkversion);
+    result = markdown_flatten(doc);
+    printf("result: %s\n", result);
+    //printf("%d,%d,\n",doc->head->is_deleted,doc->head->next->is_deleted);
+    printf("---------------\n");
+    markdown_delete(doc, 2, 3, 6);
+    //markdown_delete(doc, 2, 2, 4);   
+    markdown_increment_version(doc);
+    result = markdown_flatten(doc);
+    //printf("version: %ld\n",doc->version);
+    printf("result: %s\n", result);    
     
-//     // markdown_increment_version(doc);
+    // markdown_increment_version(doc);
 
-//     free(result);
-//     markdown_free(doc);
-//     return 0;
-// }
+    free(result);
+    markdown_free(doc);
+    return 0;
+}
