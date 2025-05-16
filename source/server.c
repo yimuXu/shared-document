@@ -21,6 +21,7 @@
 #define MAX_CLIENT 10
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
+
 struct clientpipe{
     int c2sfd;
     int s2cfd;
