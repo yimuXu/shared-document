@@ -605,11 +605,11 @@ char *markdown_flatten(const document *doc) {
 
     uint64_t size = markdown_get_size(doc);
     if(size == 0) {
-        bfdc = realloc(bfdc,1);
+        bfdc = malloc(1);
         bfdc[0] = '\0';
         return bfdc;
     }
-    bfdc = realloc(bfdc,(size + 1));
+    bfdc = malloc((size + 1));
     chunk* current = doc->head;
     size_t offset = 0;
     while(current){
