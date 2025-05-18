@@ -76,7 +76,7 @@ int checkauthorisation(char* username, int c2sfd, int s2cfd, int* rw_flag){
         char* token = strtok(line, " \t");
         if(strcmp(token, username) == 0){
             char* edit = strtok(NULL, " \t");
-            printf("editstatus: %s", edit);/// for debug
+            printf("editstatus: %s\n", edit);/// for debug
             write(s2cfd, edit, strlen(edit)+1);
             if(strncmp(edit,"write",strlen(edit)+1) == 0){
                 *rw_flag = 0;
@@ -130,7 +130,6 @@ void queue_push(msginfo* msg) {
     if(queue.count < QUEUE_SIZE) {
         printf("queue push msg into queue\n");
         queue.msg[queue.rear] = *msg;
-        queue.msg[queue.rear].data[255] = '\0';
         queue.rear = (queue.rear + 1) %  QUEUE_SIZE;
         queue.count++;
         pthread_cond_signal(&queue.cond);
@@ -158,11 +157,10 @@ struct clientpipe* addclient(int c2sfd, int s2cfd, char* username, int clientpid
     return new_client;
 }
 // delete client from list
-void deleteclient(int clientpid){
+void deleteclient(char* username){
     pthread_mutex_lock(&mutex);
     for(int i = 0; i < clientcount; i++){
-        if(clients[i].clientpid == clientpid){
-            
+        if(strcmp(clients[i].username,username) == 0){
             free(clients[i].username);
             close(clients[i].c2sfd);
             close(clients[i].s2cfd);
@@ -174,8 +172,7 @@ void deleteclient(int clientpid){
                 clients[j] = clients[j+1];
             }
             clientcount--;
-            
-            printf("client %d deleted from clients!\n", clientpid);
+            printf("client %s deleted from clients!\n", username);
             break;
         }
     }
@@ -193,27 +190,38 @@ int handle_edit_command() {
 
     }
     printf("handle the first command in queue!\n");
-    char* command = queue.msg[queue.front].data;
-    char* username = queue.msg[queue.front].username;
+    msginfo current = queue.msg[queue.front];// copy current msginfo
     queue.front = (queue.front + 1) % QUEUE_SIZE;
     queue.count--;
     pthread_mutex_unlock(&queue.mutex);
     char log_line[256];
     if(queue.msg[queue.front].premission != 0) {
-        snprintf(log_line,256, "EDIT %s %s %s %s",username,command,"Reject","UNAUTHORISED");
+        snprintf(log_line,256, "EDIT %s %s %s %s",current.username,current.data,"Reject","UNAUTHORISED");
         return 0;
     }
-    char* commandtype = strtok(command, " ");
+    char* commandtype = strtok(current.data, " ");
     if(strcmp(commandtype, "INSERT") == 0){
         // insert command
         int pos = atoi(strtok(NULL, " "));
         char* content = strtok(NULL, "");
+        content[strcspn(content, "\n")] = 0;
         // call the insert function //////////////////////
         printf("insert %s at %d\n", content, pos);
         // call insert function
         int sta = markdown_insert(doc,doc->version,pos, content);
         if(sta == 0){
-            snprintf(log_line,256,"EDIT %s %s SUCCESS",username, command);
+            printf("insert success\n");
+            snprintf(log_line,256,"EDIT %s %s SUCCESS",current.username, current.data);
+        }else if(sta == -1){
+
+            printf("insert failed: position out of range\n");
+            snprintf(log_line, 256, "EDIT %s %s %s %s", current.username, current.data, "Reject", "INVALID_POSITION");
+        } else if(sta == -2) {
+            printf("insert failed: delete error\n");
+            snprintf(log_line, 256, "EDIT %s %s %s %s", current.username, current.data, "Reject", "DELETED_POSITION");
+        }else if(sta == -3){
+            printf("insert failed: outdate error\n");
+            snprintf(log_line, 256, "EDIT %s %s %s %s", current.username, current.data, "Reject", "OUTDATED_VERSION");
         }
     }else if(strcmp(commandtype, "DELETE") == 0){
         // delete command
@@ -223,7 +231,7 @@ int handle_edit_command() {
         printf("delete %d at %d\n", len, pos);
     }else if(strcmp(commandtype, "DISCONNECT\n") == 0){
         // edit command
-        
+        deleteclient(current.username);
         return -1; // disconnect client
     }
     return 0;
@@ -233,16 +241,19 @@ int handle_edit_command() {
 // thread handle epoll event
 void* queue_handle_thread(void* arg) {
     (void)arg;
+    printf("start to handle edit command!\n");
     while(1) {
         handle_edit_command();
     }
     return NULL;
 }
-// thread to broadcast message to all clients
+// thread to broadcast message to all clients  and update the verison and do
 void* broadcast_to_all_clients_thread(void* arg) {
     int interval = *(int*)arg;
+    printf("broadcast is running!\n");
     while(1){
         sleep(interval);
+        printf("broadcast to clients!\n");
         pthread_mutex_lock(&queue.mutex);
         while (queue.count > 0) {
             pthread_cond_wait(&queue.cond, &queue.mutex);
@@ -251,7 +262,7 @@ void* broadcast_to_all_clients_thread(void* arg) {
         pthread_mutex_lock(&mutex);
         markdown_increment_version(doc);
         dcdata = markdown_flatten(doc);
-        
+        //edit thel log 
         for(int i = 0; i< clientcount;i++){
             if(clients->s2cfd){
                 int fd = clients[i].s2cfd;
@@ -267,19 +278,28 @@ void* broadcast_to_all_clients_thread(void* arg) {
 void* servercom(void* arg){
     (void)arg;
     char quit[256];
-    while(fgets(quit, 256, stdin)){
-        if(strcmp(quit, "QUIT\n") == 0){
-            if( clientcount == 0){
-                free(clients);
-                //break;
-            }else{
-                printf("QUIT rejected, %d clients still connected.\n", clientcount);
-            }
-        }else if(strcmp(quit, "DOC?") == 0){
-            printf("%s\n",quit);
-            printf("%s",dcdata);
+    printf("server side debug is running!\n");
+    while(1){
+        if(fgets(quit, 256, stdin)){
+            if(strcmp(quit, "QUIT\n") == 0){
+                if( clientcount == 0){
+                    free(clients);
+                    printf("quit the thread\n");
+                    break;
+                }else{
+                    printf("QUIT rejected, %d clients still connected.\n", clientcount);
+                }
+            }else if(strcmp(quit, "DOC?\n") == 0){
+                printf("%s",quit);
+                printf("%s",dcdata);
+            }else if(strcmp(quit, "LOG?\n")== 0){
+                printf("print log!\n");
+                printf("%s", dcdata);
+            }            
         }
+
     } 
+    printf("quit the server command loop\n");
     return NULL;
 
 }
@@ -339,11 +359,18 @@ void* communication_thread(void* arg){
             char buf[256];
             read(fd,buf,256);
             msginfo* new_msg = malloc(sizeof(msginfo));
-            new_msg->data = strdup(buf);
-            new_msg->data[255] = '\0';
+            size_t len =strlen(buf);
+            new_msg->data = malloc(len+1);
+            strncpy(new_msg->data,buf,len);
+            new_msg->data[len] = '\0';
+            //new_msg->data[255] = '\0';
             clock_gettime(CLOCK_REALTIME, &new_msg->timestamp);
+
             username[strcspn(username, "\n")] = 0;
-            new_msg->username = username;
+            int name_len = strlen(username);
+            new_msg->username = malloc(name_len+1);
+            strncpy(new_msg->username, username,name_len);
+            new_msg->username[name_len] = '\0';
             new_msg->premission = rw_flag;
             new_msg->reject = -1;
             queue_push(new_msg);
@@ -375,15 +402,19 @@ int main(int argc, char** argv){
 
     pthread_t handle_event;
     pthread_create(&handle_event, NULL, queue_handle_thread, NULL);
-    pthread_detach(handle_event);
+
     doc = markdown_init();
     dcdata = malloc(1);// used in the markdown.c flatten
     editlog = malloc(10);
     editlog = "send log";
+    dcdata[0] = '\0';
     // broadcast message to all clients every time_interval seconds
     pthread_t broadcast;
     pthread_create(&broadcast,NULL, broadcast_to_all_clients_thread, &time_interval);
 
+    // server debuging thread
+    pthread_t server_command;
+    pthread_create(&server_command, NULL,servercom, NULL);
     //while(1){
         siginfo_t info;
         int sig = sigwaitinfo(&set, &info);
