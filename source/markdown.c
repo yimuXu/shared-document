@@ -6,6 +6,7 @@
 #define DELETED_POSITION -2
 #define OUTDATE_VERSION -3
 
+char* bfdc;
 
 // === Init and Free ===
 document *markdown_init(void) {
@@ -604,24 +605,24 @@ char *markdown_flatten(const document *doc) {
 
     uint64_t size = markdown_get_size(doc);
     if(size == 0) {
-        bufdoc = realloc(bufdoc,1);
-        bufdoc[0] = '\0';
-        return bufdoc;
+        bfdc = realloc(bfdc,1);
+        bfdc[0] = '\0';
+        return bfdc;
     }
-    bufdoc = realloc(bufdoc,(size + 1));
+    bfdc = realloc(bfdc,(size + 1));
     chunk* current = doc->head;
     size_t offset = 0;
     while(current){
         if(current->chunkversion == doc->version && (current->is_deleted == 0 || current->is_deleted > doc->version)) {
             for(size_t i = 0; i < current->chunksize; i++) {
-                bufdoc[offset + i] = current->data[i];
+                bfdc[offset + i] = current->data[i];
             }
             offset += current->chunksize;
         }
         current = current->next;
     }
-    bufdoc[size] = '\0';
-    return bufdoc;
+    bfdc[size] = '\0';
+    return bfdc;
 }
 
 // update the chunck version

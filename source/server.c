@@ -17,7 +17,6 @@
 #include <sys/epoll.h>
 #include <sys/wait.h>
 #include "markdown.h"
-//#include "server.h"
 
 #define MAX_CLIENT 10
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -55,11 +54,12 @@ struct clientpipe{
 
 };
 char* bufferdoc;// doc size + text
-char* doctext; // doc text
 uint64_t docsize;  // size of document
 struct clientpipe* clients;
 document* doc;//// store the old document and send to client server side copy of document
 int clientcount; // count of clients
+char* editlog;
+char* dcdata;
 
 int checkauthorisation(char* username, int c2sfd, int s2cfd, int* rw_flag){
     // check if username is valid
@@ -239,20 +239,33 @@ void* queue_handle_thread(void* arg) {
     return NULL;
 }
 // thread to broadcast message to all clients
-void broadcast_to_all_clients_thread(const char* msg) {
-    pthread_mutex_lock(&mutex);
-    for(int i = 0; i< MAX_CLIENT;i++){
-        if(clients->s2cfd){
-            int fd = clients[i].s2cfd;
-            write(fd,msg,strlen(msg));            
+void* broadcast_to_all_clients_thread(void* arg) {
+    int interval = *(int*)arg;
+    while(1){
+        sleep(interval);
+        pthread_mutex_lock(&queue.mutex);
+        while (queue.count > 0) {
+            pthread_cond_wait(&queue.cond, &queue.mutex);
         }
-
+        pthread_mutex_unlock(&queue.mutex);  
+        pthread_mutex_lock(&mutex);
+        markdown_increment_version(doc);
+        dcdata = markdown_flatten(doc);
         
+        for(int i = 0; i< clientcount;i++){
+            if(clients->s2cfd){
+                int fd = clients[i].s2cfd;
+                write(fd,editlog,strlen(editlog));            
+            }            
+        }
+        pthread_mutex_unlock(&mutex);
+              
     }
-    pthread_mutex_unlock(&mutex);
+    return NULL;
 }
 
 void* servercom(void* arg){
+    (void)arg;
     char quit[256];
     while(fgets(quit, 256, stdin)){
         if(strcmp(quit, "QUIT\n") == 0){
@@ -264,9 +277,11 @@ void* servercom(void* arg){
             }
         }else if(strcmp(quit, "DOC?") == 0){
             printf("%s\n",quit);
-            printf("%s",doctext);
+            printf("%s",dcdata);
         }
-    }    
+    } 
+    return NULL;
+
 }
 
 void* communication_thread(void* arg){
@@ -303,10 +318,10 @@ void* communication_thread(void* arg){
 
     // add client to list// add event to epoll
     addclient(c2sfd, s2cfd, username, *clientpid, c2s, s2c);
-    docsize = (uint64_t)strlen(doctext);
-    snprintf(bufferdoc,docsize + (uint64_t)sizeof(uint64_t),"%ld\n%s", docsize, doctext);
-    write(s2cfd, bufferdoc, sizeof(bufferdoc));
-    free(doctext);
+    docsize = (uint64_t)(strlen(dcdata) + sizeof(uint64_t));
+    bufferdoc = malloc(docsize);
+    snprintf(bufferdoc,docsize,"%ld\n%s", docsize, dcdata);
+    write(s2cfd, bufferdoc, strlen(bufferdoc));
     int epollfd = epoll_create1(0);
     if(epollfd == -1){
         perror("epoll_create1");
@@ -324,7 +339,7 @@ void* communication_thread(void* arg){
             char buf[256];
             read(fd,buf,256);
             msginfo* new_msg = malloc(sizeof(msginfo));
-            new_msg->data = buf;
+            new_msg->data = strdup(buf);
             new_msg->data[255] = '\0';
             clock_gettime(CLOCK_REALTIME, &new_msg->timestamp);
             username[strcspn(username, "\n")] = 0;
@@ -361,12 +376,13 @@ int main(int argc, char** argv){
     pthread_t handle_event;
     pthread_create(&handle_event, NULL, queue_handle_thread, NULL);
     pthread_detach(handle_event);
-    doc = malloc(sizeof(document));
     doc = markdown_init();
-    bufdoc = malloc(1);// used in the markdown.c flatten
+    dcdata = malloc(1);// used in the markdown.c flatten
+    editlog = malloc(10);
+    editlog = "send log";
     // broadcast message to all clients every time_interval seconds
     pthread_t broadcast;
-    pthread_create(&broadcast,NULL, broadcast_to_all_clients_thread, NULL);
+    pthread_create(&broadcast,NULL, broadcast_to_all_clients_thread, &time_interval);
 
     //while(1){
         siginfo_t info;

@@ -6,8 +6,6 @@
  * You are allowed to and encouraged multiple helper functions and data structures, and make your code as modular as possible. 
  * Ensure you DO NOT change the name of document struct.
  */
-//typedef struct chunk chunk;
-
 
 typedef struct chunk{
     // TODO
@@ -30,5 +28,5 @@ typedef struct {
 
 // Functions from here onwards.
 #endif
-char* doctext;
-char* bufdoc;
+
+
