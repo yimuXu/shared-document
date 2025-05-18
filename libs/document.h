@@ -30,3 +30,5 @@ typedef struct {
 
 // Functions from here onwards.
 #endif
+char* doctext;
+char* bufdoc;

@@ -2,11 +2,11 @@
 #include <ctype.h>
 
 #define SUCCESS 0 
-#define INVALID_CURSOR_POS -1
-#define DELETE_POSITION -2
+#define INVALID_POSITION -1
+#define DELETED_POSITION -2
 #define OUTDATE_VERSION -3
 
-char* bufdoc = NULL;
+
 // === Init and Free ===
 document *markdown_init(void) {
     document *doc = (document*)malloc(sizeof(document));
@@ -26,14 +26,16 @@ document *markdown_init(void) {
 }
 
 void markdown_free(document *doc) {
-    //free(bufdoc);
-    if (doc == NULL) {
+    if (doc == NULL || doc->head->data == NULL) {
         return;
     }
     chunk *current = doc->head;
     while (current != NULL) {
         chunk *next = current->next;
-        free(current->data);
+        if(current->data != NULL){
+            free(current->data); 
+        }
+        
         free(current);
         current = next;
     }
@@ -219,7 +221,7 @@ int markdown_insert(document *doc, uint64_t version, size_t pos, const char *con
     uint64_t size = markdown_get_size(doc);
     if(content == NULL) {
         printf("content is NULL\n");
-        return DELETE_POSITION;
+        return DELETED_POSITION;
     }
     // for order_list
     int ordernum = 0;
@@ -247,7 +249,7 @@ int markdown_insert(document *doc, uint64_t version, size_t pos, const char *con
     }
     if(pos > size) {
         printf("invalid cursor position!%ld,%ld\n",pos,size);
-        return INVALID_CURSOR_POS;
+        return INVALID_POSITION;
     }
     // check the version no sure if necessary
     uint64_t current_pos;
@@ -318,7 +320,7 @@ int markdown_delete(document *doc, uint64_t version, size_t pos, size_t len) {
         return OUTDATE_VERSION;
     }
     if(pos > size) {
-        return INVALID_CURSOR_POS;
+        return INVALID_POSITION;
     }
     if(pos == size) {
         return SUCCESS;
@@ -602,11 +604,11 @@ char *markdown_flatten(const document *doc) {
 
     uint64_t size = markdown_get_size(doc);
     if(size == 0) {
-        bufdoc = malloc(1);
+        bufdoc = realloc(bufdoc,1);
         bufdoc[0] = '\0';
         return bufdoc;
     }
-    bufdoc = malloc(size + 1);
+    bufdoc = realloc(bufdoc,(size + 1));
     chunk* current = doc->head;
     size_t offset = 0;
     while(current){

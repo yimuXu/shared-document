@@ -1,6 +1,8 @@
 //TODO: client code that can send instructions to server.
 #include "markdown.h"
 
+document* doc;
+char* editlog;
 
 int main (int argc, char** argv){
     if (argc != 3){
@@ -31,7 +33,7 @@ int main (int argc, char** argv){
     char s2c[100];
     sprintf(c2s, "%s%d",name1,clientpid);
     sprintf(s2c, "%s%d",name2,clientpid);
-    printf("client open fifo\n");
+    
 
     // pipe's file descriptor
     int c2sfd = open(c2s, O_WRONLY);
@@ -44,6 +46,7 @@ int main (int argc, char** argv){
         printf("open FIFO_S2C error!\n");
         exit(1);
     } 
+    printf("client %d: open fifo\n", clientpid);
     //send username to server
     char username[256];
     sprintf(username, "%s\n", argv[2]);
@@ -60,8 +63,28 @@ int main (int argc, char** argv){
             write(c2sfd, buffer, strlen(buffer)+1);
         }
     }else{
-        printf("error!\n");//debug
+        printf("error of authorisation!\n");//debug
         return 1;
+    }
+    char buf[256];
+    editlog = "";
+    while(fgets(buf, 256, stdin)){
+        if(strncmp(buf,"DOC?",256)==0){
+            printf("%s",markdown_flatten(doc));
+        }else if(strncmp(buf, "PERM?",256)==0){
+            printf("%s",username);
+        }else if(strncmp(buf, "LOG?",256)) {
+            printf("%s\n", editlog);
+        }else if(strncmp(buf, "DISCONNECT",256) == 0) {
+            write(c2sfd,buf,256);
+            close(c2sfd);
+            close(s2cfd);
+            unlink(c2s);
+            unlink(s2c);
+            break;
+        }else{
+            write(c2sfd,buf,256);
+        }
     }
     return 0;
 
