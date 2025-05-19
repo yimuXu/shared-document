@@ -140,7 +140,7 @@ void *makefifo(void* arg, char* c2sname, char* s2cname){
         printf("mkfifo error!\n");
         return NULL;
     }
-    printf("FIFO created: %s, %s!\n",c2sname,s2cname);
+    //printf("FIFO created: %s, %s!\n",c2sname,s2cname);
     
 
     return NULL;
@@ -392,7 +392,6 @@ void* communication_thread(void* arg){
         printf("open FIFO_S2C error!\n");
         return NULL;
     }
-    printf("pipe: %s, %s set!\n",c2s,s2c);
     // read username from client
     char username[256];
     int rw_flag = -1;//read or write
