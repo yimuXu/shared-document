@@ -68,7 +68,9 @@ int clientcount; // count of clients
 char* editlog;
 char* dcdata;
 
-int quit_edit;
+int quit_edit; //flag for quit all threads
+int num_com_success;
+
 
 void versionline_free(){
     versionlog* cur = log_head;
@@ -250,7 +252,8 @@ int handle_edit_command() {
         // call insert function
         int sta = markdown_insert(doc,doc->version,pos, content);
         if(sta == 0){
-            printf("insert success\n");
+            //printf("insert success\n");
+            num_com_success ++;
             snprintf(log_line,256,"EDIT %s %s SUCCESS",username_copy, data_copy);
         }else if(sta == -1){
 
@@ -297,7 +300,7 @@ void* broadcast_to_all_clients_thread(void* arg) {
         if(quit_edit == 1){
             break;
         }
-        usleep(interval*1000);
+        usleep(interval * 1000);
         //printf("broadcast to clients!\n");
         pthread_mutex_lock(&queue.mutex);
         while (queue.count > 0) {
@@ -312,7 +315,10 @@ void* broadcast_to_all_clients_thread(void* arg) {
         char* versionline = malloc(len);
         
         append_to_editlog(end);
-        markdown_increment_version(doc);
+        if(num_com_success != 0){
+            markdown_increment_version(doc);
+            num_com_success = 0;
+        }
         int verisonnum = doc->version + 1;
         snprintf(versionline,len,"%s %d\n",bufversion,verisonnum);
         append_to_editlog(versionline);

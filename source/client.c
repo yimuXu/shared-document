@@ -84,7 +84,7 @@ int main (int argc, char** argv){
     if(strcmp(authorisation, "read") == 0){
         //printf("read!\n");
     }else if(strcmp(authorisation, "write") == 0){
-        printf("write\n");
+        //printf("write\n");
         char buf[256];
         read(s2cfd,buf,256);
         printf("%s",buf);
