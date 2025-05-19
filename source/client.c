@@ -6,7 +6,7 @@ char* editlog;
 
 void* receive_broadcast (void* arg){
     int* s2cfd = (int*)arg;
-    printf("client is receiving broadcast from server!\n");
+    //printf("client is receiving broadcast from server!\n");
     while(1){
 
         // int size = read(*s2cfd,editlog,256);
@@ -25,7 +25,7 @@ void* receive_broadcast (void* arg){
             // editlog = realloc(editlog, strlen(editlog) + size + 1);
             // strncat(editlog, temp, size);
             // editlog[strlen(editlog)] = '\0';
-            printf("update client doc\n");
+            //printf("update client doc\n");
         }
     }
     return NULL;
@@ -74,7 +74,7 @@ int main (int argc, char** argv){
         printf("open FIFO_S2C error!\n");
         exit(1);
     } 
-    printf("client %d: open fifo\n", clientpid);
+    //printf("client %d: open fifo\n", clientpid);
     //send username to server
     char username[256];
     sprintf(username, "%s\n", argv[2]);
@@ -82,9 +82,9 @@ int main (int argc, char** argv){
     char authorisation[256];
     read(s2cfd, authorisation, 256);
     if(strcmp(authorisation, "read") == 0){
-        printf("read!\n");
+        //printf("read!\n");
     }else if(strcmp(authorisation, "write") == 0){
-        printf("write!\n");
+        printf("write\n");
         char buf[256];
         read(s2cfd,buf,256);
         printf("%s",buf);
@@ -121,11 +121,11 @@ int main (int argc, char** argv){
             }else{
                 ssize_t size_written = write(c2sfd,buf,256);
                 if(size_written > 0){
-                    printf("cilent side, send command successful\n");
+                    //printf("cilent side, send command successful\n");
                 }else if (size_written<=0)
                 
                 {
-                    printf("send command fail");    /* code */
+                    //printf("send command fail");    /* code */
                 }
                 
             }        

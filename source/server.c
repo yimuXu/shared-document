@@ -298,7 +298,7 @@ void* broadcast_to_all_clients_thread(void* arg) {
             break;
         }
         usleep(interval*1000);
-        printf("broadcast to clients!\n");
+        //printf("broadcast to clients!\n");
         pthread_mutex_lock(&queue.mutex);
         while (queue.count > 0) {
             pthread_cond_wait(&queue.cond, &queue.mutex);
