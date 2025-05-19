@@ -6,7 +6,7 @@
 #include <signal.h>
 #include <sys/syscall.h>
 #include <unistd.h>
-#include <sys/select.h>
+//#include <sys/select.h>
 #include <fcntl.h>
 #include <string.h>
 #include <sys/types.h>
@@ -15,7 +15,7 @@
 #include <errno.h>
 #include <sys/epoll.h>
 #include <sys/wait.h>
-#include <bits/sigaction.h>
+//#include <bits/sigaction.h>
 #ifndef MARKDOWN_H
 #define MARKDOWN_H
 #include "document.h" 

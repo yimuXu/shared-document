@@ -1,6 +1,6 @@
 // TODO: server code that manages the document and handles client instructions
-#define _POSIX_C_SOURCE 200809L
-//#define _DEFAULT_C_SOURCE 
+//#define _POSIX_C_SOURCE 200809L
+#define _DEFAULT_C_SOURCE 
 #include <signal.h>
 #include <unistd.h>
 #include <time.h>
@@ -8,15 +8,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/syscall.h>
-#include <sys/select.h>
 #include <fcntl.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <errno.h>
 #include <sys/epoll.h>
 #include <sys/wait.h>
-#include <unistd.h>
 #include "markdown.h"
 
 #define MAX_CLIENT 10
