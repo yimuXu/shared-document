@@ -8,6 +8,7 @@ void* receive_broadcast (void* arg){
     int* s2cfd = (int*)arg;
     printf("client is receiving broadcast from server!\n");
     while(1){
+
         // int size = read(*s2cfd,editlog,256);
         // if(size > 0){
         //     // update the local documant;
@@ -132,6 +133,7 @@ int main (int argc, char** argv){
 
     }
     free(editlog);
-    exit(0);
+    pthread_cancel(broadcast_thread);
+    pthread_join(broadcast_thread, NULL);
     return 0;
 }
