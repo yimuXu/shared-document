@@ -415,13 +415,13 @@ void* communication_thread(void* arg){
     // printf("im in\n");
     // free(bufferdoc);
     dcdata = markdown_flatten(doc);
-    size_t needed = snprintf(NULL, 0, "VERSION %ld\n%ld\n%s", doc->version+1, (uint64_t)strlen(dcdata), dcdata) + 1;
+    size_t needed = snprintf(NULL, 0, "VERSION %ld\n%ld\n%s\n", doc->version+1, (uint64_t)strlen(dcdata), dcdata) + 1;
     bufferdoc = malloc(needed);
     if (!bufferdoc) {
         perror("malloc bufferdoc");
         // handle error
     }
-    snprintf(bufferdoc, needed, "VERSION %ld\n%ld\n%s",doc->version +1, (uint64_t)strlen(dcdata), dcdata);
+    snprintf(bufferdoc, needed, "VERSION %ld\n%ld\n%s\n",doc->version +1, (uint64_t)strlen(dcdata), dcdata);
     int x = write(s2cfd, bufferdoc, strlen(bufferdoc));
     if (x == -1) {
         printf("write error:\n");
