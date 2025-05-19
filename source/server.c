@@ -282,20 +282,20 @@ int handle_edit_command() {
 // thread handle priority queue event
 void* queue_handle_thread(void* arg) {
     (void)arg;
-    printf("start to handle edit command!\n");
+    //printf("start to handle edit command!\n");
     while(1) {
         if(quit_edit == 1){
             break;
         }
         handle_edit_command();
     }
-    printf("quit the queue handle thread\n");
+    //printf("quit the queue handle thread\n");
     return NULL;
 }
 // thread to broadcast message to all clients  and update the verison and do
 void* broadcast_to_all_clients_thread(void* arg) {
     int interval = *(int*)arg;
-    printf("broadcast is running!\n");
+    //printf("broadcast is running!\n");
     while(1){
         if(quit_edit == 1){
             break;
@@ -319,7 +319,7 @@ void* broadcast_to_all_clients_thread(void* arg) {
             markdown_increment_version(doc);
             num_com_success = 0;
         }
-        int verisonnum = doc->version + 1;
+        int verisonnum = doc->version;
         snprintf(versionline,len,"%s %d\n",bufversion,verisonnum);
         append_to_editlog(versionline);
         free(versionline);
@@ -335,7 +335,7 @@ void* broadcast_to_all_clients_thread(void* arg) {
         pthread_mutex_unlock(&mutex);
               
     }
-    printf("quit the broadcast\n");
+    //printf("quit the broadcast\n");
     return NULL;
 }
 
@@ -343,7 +343,7 @@ void* servercom(void* arg){
 
     (void)arg;
     char quit[256];
-    printf("server side debug is running!\n");
+    //printf("server side debug is running!\n");
     while(1){
         if(fgets(quit, 256, stdin)){
             if(strcmp(quit, "QUIT\n") == 0){
@@ -370,7 +370,7 @@ void* servercom(void* arg){
         }
 
     } 
-    printf("quit the server command loop\n");
+    //printf("quit the server command loop\n");
     return NULL;
 }
 
@@ -410,21 +410,21 @@ void* communication_thread(void* arg){
     addclient(c2sfd, s2cfd, username, *clientpid, c2s, s2c);
     
     dcdata = markdown_flatten(doc);
-    char* perm;
-    if(rw_flag == 0){
-        perm = "write";
-    }else if (rw_flag == 1)
-    {
-        perm = "read";
-    }
+    // char* perm;
+    // if(rw_flag == 0){
+    //     perm = "write";
+    // }else if (rw_flag == 1)
+    // {
+    //     perm = "read";
+    // }
     
-    size_t needed = snprintf(NULL, 0, "%s\nVERSION %ld\n%ld\n%s\n",perm, doc->version+1, (uint64_t)strlen(dcdata), dcdata) + 1;
+    size_t needed = snprintf(NULL, 0, "%ld\n%ld\n%s", doc->version, (uint64_t)strlen(dcdata), dcdata) + 1;
     bufferdoc = malloc(needed);
     if (!bufferdoc) {
         perror("malloc bufferdoc");
         // handle error
     }
-    snprintf(bufferdoc, needed, "%s\nVERSION %ld\n%ld\n%s\n",perm,doc->version +1, (uint64_t)strlen(dcdata), dcdata);
+    snprintf(bufferdoc, needed, "%ld\n%ld\n%s",doc->version, (uint64_t)strlen(dcdata), dcdata);
     int x = write(s2cfd, bufferdoc, strlen(bufferdoc));
     if (x == -1) {
         printf("write error:\n");
@@ -467,12 +467,13 @@ void* communication_thread(void* arg){
                 queue_push(new_msg);
                 
                 if(strncmp(new_msg->data, "DISCONNECT\n", 11) == 0){
+                    
                     break;
                 }
         //      }
         // }        
     }
-    printf("quit the communication thread\n");
+    printf("quit communication thread\n");
 
     return NULL;
 
