@@ -95,7 +95,7 @@ int checkauthorisation(char* username, int c2sfd, int s2cfd, int* rw_flag){
         char* token = strtok(line, " \t");
         if(strcmp(token, username) == 0){
             char* edit = strtok(NULL, " \t");
-            printf("editstatus: %s\n", edit);/// for debug
+            //printf("editstatus: %s\n", edit);/// for debug
             write(s2cfd, edit, strlen(edit)+1);
             if(strncmp(edit,"write",strlen(edit)+1) == 0){
                 *rw_flag = 0;
@@ -403,25 +403,22 @@ void* communication_thread(void* arg){
     // add client to list// add event to epoll
     addclient(c2sfd, s2cfd, username, *clientpid, c2s, s2c);
     
-    // docsize = (uint64_t)(strlen(dcdata) + sizeof(uint64_t));
-    // bufferdoc = malloc(docsize+1);  ///// document with size,,,,, dcdata is doc text change every broadcast
-    // bufferdoc[docsize] ='\0';
-    // snprintf(bufferdoc,docsize,"%ld\n%s", docsize, dcdata);
-    
-    // int x = write(s2cfd, bufferdoc, docsize+1);
-    // if(x == -1) {
-    //     printf("write error:\n");
-    // }
-    // printf("im in\n");
-    // free(bufferdoc);
     dcdata = markdown_flatten(doc);
-    size_t needed = snprintf(NULL, 0, "VERSION %ld\n%ld\n%s\n", doc->version+1, (uint64_t)strlen(dcdata), dcdata) + 1;
+    char* perm;
+    if(rw_flag == 0){
+        perm = "write";
+    }else if (rw_flag == 1)
+    {
+        perm = "read";
+    }
+    
+    size_t needed = snprintf(NULL, 0, "%s\nVERSION %ld\n%ld\n%s\n",perm, doc->version+1, (uint64_t)strlen(dcdata), dcdata) + 1;
     bufferdoc = malloc(needed);
     if (!bufferdoc) {
         perror("malloc bufferdoc");
         // handle error
     }
-    snprintf(bufferdoc, needed, "VERSION %ld\n%ld\n%s\n",doc->version +1, (uint64_t)strlen(dcdata), dcdata);
+    snprintf(bufferdoc, needed, "%s\nVERSION %ld\n%ld\n%s\n",perm,doc->version +1, (uint64_t)strlen(dcdata), dcdata);
     int x = write(s2cfd, bufferdoc, strlen(bufferdoc));
     if (x == -1) {
         printf("write error:\n");
@@ -429,10 +426,10 @@ void* communication_thread(void* arg){
     free(dcdata);
     free(bufferdoc);
     
-    int epollfd = epoll_create1(0);
-    if(epollfd == -1){
-        perror("epoll_create1");
-    }
+    // int epollfd = epoll_create1(0);
+    // if(epollfd == -1){
+    //     perror("epoll_create1");
+    // }
     
     // epoll 
     // struct epoll_event ev, events[10];
