@@ -16,6 +16,7 @@
 #include <errno.h>
 #include <sys/epoll.h>
 #include <sys/wait.h>
+#include <unistd.h>
 #include "markdown.h"
 
 #define MAX_CLIENT 10
@@ -299,7 +300,7 @@ void* broadcast_to_all_clients_thread(void* arg) {
         if(quit_edit == 1){
             break;
         }
-        sleep(interval);
+        usleep(interval*1000);
         printf("broadcast to clients!\n");
         pthread_mutex_lock(&queue.mutex);
         while (queue.count > 0) {
