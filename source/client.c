@@ -87,7 +87,7 @@ int main (int argc, char** argv){
         //printf("write\n");
         char buf[256];
         read(s2cfd,buf,256);
-        printf("%s",buf);
+        //printf("%s",buf);
         
     }else{
         printf("%s\n",authorisation);

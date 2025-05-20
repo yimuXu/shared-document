@@ -2,7 +2,7 @@
 #include <ctype.h>
 
 #define SUCCESS 0 
-#define INVALID_POSITION -1
+#define INVALID_CURSOR_POS -1
 #define DELETED_POSITION -2
 #define OUTDATE_VERSION -3
 
@@ -222,14 +222,13 @@ int markdown_insert(document *doc, uint64_t version, size_t pos, const char *con
     uint64_t size = markdown_get_size(doc);
     if(content == NULL) {
         printf("content is NULL\n");
-        return DELETED_POSITION;
+        return INVALID_CURSOR_POS;
     }
     // for order_list
     int ordernum = 0;
     if(strlen(content) == 2){
         if(isdigit((unsigned char)content[0]) && content[1] == '.'){
             ordernum = content[0] -'0';
-
         }
     }
     
@@ -249,8 +248,9 @@ int markdown_insert(document *doc, uint64_t version, size_t pos, const char *con
         return OUTDATE_VERSION;
     }
     if(pos > size) {
-        printf("invalid cursor position!%ld,%ld\n",pos,size);
-        return INVALID_POSITION;
+        //printf("invalid cursor position!%ld,%ld\n",pos,size);
+        return INVALID_CURSOR_POS;
+;
     }
     // check the version no sure if necessary
     uint64_t current_pos;
@@ -262,7 +262,6 @@ int markdown_insert(document *doc, uint64_t version, size_t pos, const char *con
             current = split_chunk(current, current_pos,0, doc);
             current_pos = 0;
     }
-    
     // insert
     doc->size += strlen(content);
     if(current_pos == 0) {
@@ -274,7 +273,6 @@ int markdown_insert(document *doc, uint64_t version, size_t pos, const char *con
         new_chunk->chunkversion = doc->version + 1;
         new_chunk->order_num = ordernum;
         //printf("version: %ld\n",new_chunk->chunkversion);
-        
         if(current->next == NULL && pos != 0) {/////add to the end
             //printf("insert at the end\n");
             new_chunk->next = NULL;
@@ -283,7 +281,6 @@ int markdown_insert(document *doc, uint64_t version, size_t pos, const char *con
             new_chunk->prev = last_chunk;
             last_chunk->next = new_chunk;
             new_chunk->next = NULL;
-            return SUCCESS;
         }else if(current != NULL && pos !=0) {// insert in the middle
             // create a new chunk
             //printf("insert in the middle\n");
@@ -297,12 +294,8 @@ int markdown_insert(document *doc, uint64_t version, size_t pos, const char *con
             new_chunk->prev = NULL;
             current->prev = new_chunk;
             doc->head = new_chunk;
-
         }
-
     }
-    
-        
     return SUCCESS;
 }
 
@@ -311,17 +304,17 @@ int markdown_delete(document *doc, uint64_t version, size_t pos, size_t len) {
     //do some basic delete, do not handle version, just delete the given pos and len.
     uint64_t size = markdown_get_size(doc);
     if(doc == NULL) {
-        return SUCCESS;
+        return INVALID_CURSOR_POS;
     }
     if(size == 0) {
-        return SUCCESS;
+        return INVALID_CURSOR_POS;
     }
     if(version != doc->version) {
         printf("version is out of date!%ld,%ld\n",version,doc->version);
         return OUTDATE_VERSION;
     }
     if(pos > size) {
-        return INVALID_POSITION;
+        return INVALID_CURSOR_POS;
     }
     if(pos == size) {
         return SUCCESS;
@@ -394,12 +387,19 @@ int markdown_delete(document *doc, uint64_t version, size_t pos, size_t len) {
 // === Formatting Commands ===
 int markdown_newline(document *doc, int version, int pos) {
     //(void)doc; (void)version; (void)pos;
-    markdown_insert(doc, version, pos, "\n");
-
+    int result = markdown_insert(doc, version, pos, "\n");
+    if(result==-1){
+        return INVALID_CURSOR_POS;
+    }else if(result == -2){
+        return DELETED_POSITION;
+    }else if(result ==  -3){
+        return OUTDATE_VERSION;
+    }
     return SUCCESS;
 }
 
 int markdown_heading(document *doc, uint64_t version, int level, size_t pos) {
+    int result;
     char* buf = malloc((level + 2) * sizeof(char));
     for(int i = 0; i < level; i++) {
         buf[i] = '#';
@@ -408,11 +408,26 @@ int markdown_heading(document *doc, uint64_t version, int level, size_t pos) {
     buf[level] = ' ';
     buf[level+1] = '\0';
     int is_newline = check_prev_char_newline(doc, pos);
-    markdown_insert(doc, version, pos, buf);
+    result = markdown_insert(doc, version, pos, buf);
+    if(result==-1){
+        return INVALID_CURSOR_POS;
+    }else if(result == -2){
+        return DELETED_POSITION;
+    }else if(result ==  -3){
+        return OUTDATE_VERSION;
+    }
     if(is_newline != 1) {
-        markdown_newline(doc, version, pos);
+        result = markdown_newline(doc, version, pos);
+        if(result==-1){
+            return INVALID_CURSOR_POS;
+        }else if(result == -2){
+            return DELETED_POSITION;
+        }else if(result ==  -3){
+            return OUTDATE_VERSION;
+        }
     }
     free(buf);
+
 
     return SUCCESS;
 }
@@ -420,26 +435,57 @@ int markdown_heading(document *doc, uint64_t version, int level, size_t pos) {
 int markdown_bold(document *doc, uint64_t version, size_t start, size_t end) {
     //(void)doc; (void)version; (void)start; (void)end;
     const char *buf = "**";
-    markdown_insert(doc, version, start, buf);
-    markdown_insert(doc, version, end, buf);
+    int result1,result2;
+    result1 = markdown_insert(doc, version, start, buf);
+    result2 = markdown_insert(doc, version, end, buf);
+    if(result1==-1 || result2 == -1){
+        return INVALID_CURSOR_POS;
+    }else if(result1==-2 || result2 == -2){
+        return DELETED_POSITION;
+    }else if(result1==-3 || result2 == -3){
+        return OUTDATE_VERSION;
+    }
     return SUCCESS;
 }
 
 int markdown_italic(document *doc, uint64_t version, size_t start, size_t end) {
     //(void)doc; (void)version; (void)start; (void)end;
+    int result1,result2;
     const char *buf = "*";
-    markdown_insert(doc, version, start, buf);
-    markdown_insert(doc, version, end, buf);
+    result1 = markdown_insert(doc, version, start, buf);
+    result2 = markdown_insert(doc, version, end, buf);
+    if(result1==-1 || result2 == -1){
+        return INVALID_CURSOR_POS;
+    }else if(result1==-2 || result2 == -2){
+        return DELETED_POSITION;
+    }else if(result1==-3 || result2 == -3){
+        return OUTDATE_VERSION;
+    }
     return SUCCESS;
 }
 
 int markdown_blockquote(document *doc, uint64_t version, size_t pos) {
     //(void)doc; (void)version; (void)pos;
     const char *buf = "> ";
+    int result;
     int is_newline = check_prev_char_newline(doc, pos);
-    markdown_insert(doc, version, pos, buf);
+    result = markdown_insert(doc, version, pos, buf);
+    if(result==-1){
+        return INVALID_CURSOR_POS;
+    }else if(result == -2){
+        return DELETED_POSITION;
+    }else if(result ==  -3){
+        return OUTDATE_VERSION;
+    }
     if(is_newline == 0) {
-        markdown_newline(doc, version, pos);   
+        result = markdown_newline(doc, version, pos);   
+        if(result==-1){
+            return INVALID_CURSOR_POS;
+        }else if(result == -2){
+            return DELETED_POSITION;
+        }else if(result ==  -3){
+            return OUTDATE_VERSION;
+        }
     }
 
     return SUCCESS;
@@ -528,15 +574,36 @@ int markdown_ordered_list(document *doc, uint64_t version, size_t pos) {
     snprintf(buf, sizeof(buf), "%c.", i);
     printf(" buf :%s\n",buf);
     modify_order_number(doc,version, pos, i);
-    
+    int result;
     int is_space = check_next_char(doc, version, pos, spa);
     if(is_space == 0){
         printf("print spac\n");
-        markdown_insert(doc, version, pos, spa);
+        result = markdown_insert(doc, version, pos, spa);
+        if(result==-1){
+            return INVALID_CURSOR_POS;
+        }else if(result == -2){
+            return DELETED_POSITION;
+        }else if(result ==  -3){
+            return OUTDATE_VERSION;
+        }
     }
-    markdown_insert(doc, version, pos, buf);
+    result = markdown_insert(doc, version, pos, buf);
+    if(result==-1){
+        return INVALID_CURSOR_POS;
+    }else if(result == -2){
+        return DELETED_POSITION;
+    }else if(result ==  -3){
+        return OUTDATE_VERSION;
+    }
     if(is_newline != 1) {
-        markdown_newline(doc, version, pos);
+        result = markdown_newline(doc, version, pos);
+        if(result==-1){
+            return INVALID_CURSOR_POS;
+        }else if(result == -2){
+            return DELETED_POSITION;
+        }else if(result ==  -3){
+            return OUTDATE_VERSION;
+        }
     }
 
 
@@ -547,11 +614,25 @@ int markdown_ordered_list(document *doc, uint64_t version, size_t pos) {
 int markdown_unordered_list(document *doc, uint64_t version, size_t pos) {
     //(void)doc; (void)version; (void)pos;
     const char *buf = "- ";
-
+    int result;
     int is_newline = check_prev_char_newline(doc, pos);
-    markdown_insert(doc, version, pos, buf);
+    result = markdown_insert(doc, version, pos, buf);
+    if(result==-1){
+        return INVALID_CURSOR_POS;
+    }else if(result == -2){
+        return DELETED_POSITION;
+    }else if(result ==  -3){
+        return OUTDATE_VERSION;
+    }
     if(is_newline != 1) {
-        markdown_newline(doc, version, pos);
+        result = markdown_newline(doc, version, pos);
+        if(result==-1){
+            return INVALID_CURSOR_POS;
+        }else if(result == -2){
+            return DELETED_POSITION;
+        }else if(result ==  -3){
+            return OUTDATE_VERSION;
+        }
     }
     return SUCCESS;
 }
@@ -559,8 +640,16 @@ int markdown_unordered_list(document *doc, uint64_t version, size_t pos) {
 int markdown_code(document *doc, uint64_t version, size_t start, size_t end) {
     //(void)doc; (void)version; (void)start; (void)end;
     const char *buf = "`";
-    markdown_insert(doc, version, start, buf);
-    markdown_insert(doc, version, end, buf);
+    int result1,result2;
+    result1 = markdown_insert(doc, version, start, buf);
+    result2 = markdown_insert(doc, version, end, buf);
+    if(result1==-1 || result2 == -1){
+        return INVALID_CURSOR_POS;
+    }else if(result1==-2 || result2 == -2){
+        return DELETED_POSITION;
+    }else if(result1==-3 || result2 == -3){
+        return OUTDATE_VERSION;
+    }
     return SUCCESS;
 }
 
@@ -569,14 +658,36 @@ int markdown_horizontal_rule(document *doc, uint64_t version, size_t pos) {
     const char *buf = "---";
     char* newline = "\n";
     int next_newline = check_next_char(doc, version, pos, newline);
+    int result;
     printf("check char: %d",next_newline);
     if(next_newline == 0){
-        markdown_insert(doc,version,pos,newline);
+        result = markdown_insert(doc,version,pos,newline);
+        if(result==-1){
+            return INVALID_CURSOR_POS;
+        }else if(result == -2){
+            return DELETED_POSITION;
+        }else if(result ==  -3){
+            return OUTDATE_VERSION;
+        }
     }
-    markdown_insert(doc, version, pos, buf);
+    result = markdown_insert(doc, version, pos, buf);
+    if(result==-1){
+        return INVALID_CURSOR_POS;
+    }else if(result == -2){
+        return DELETED_POSITION;
+    }else if(result ==  -3){
+        return OUTDATE_VERSION;
+    }
     int is_newline = check_prev_char_newline(doc, pos);
     if(is_newline == 0) {
-        markdown_insert(doc, version, pos, newline);
+        result = markdown_insert(doc, version, pos, newline);
+        if(result==-1){
+            return INVALID_CURSOR_POS;
+        }else if(result == -2){
+            return DELETED_POSITION;
+        }else if(result ==  -3){
+            return OUTDATE_VERSION;
+        }
     }
     return SUCCESS;
 }
@@ -587,9 +698,17 @@ int markdown_link(document *doc, uint64_t version, size_t start, size_t end, con
     size_t size = strlen(url) + 4;
     char* buf1 = malloc(size);
     buf1[size-1]= '\0';
+    int result1,result2;
     snprintf(buf1, size, "](%s)", url);
-    markdown_insert(doc, version, start, buf);
-    markdown_insert(doc, version, end, buf1);
+    result1 = markdown_insert(doc, version, start, buf);
+    result2 = markdown_insert(doc, version, end, buf1);
+    if(result1==-1 || result2 == -1){
+        return INVALID_CURSOR_POS;
+    }else if(result1==-2 || result2 == -2){
+        return DELETED_POSITION;
+    }else if(result1==-3 || result2 == -3){
+        return OUTDATE_VERSION;
+    }
     free(buf1);
     return SUCCESS;
 }
