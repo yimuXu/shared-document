@@ -66,9 +66,6 @@ void insert_original_doc_data(char* line){
     local_doc->version = ver;
     markdown_insert(local_doc,ver,0,data);
     local_doc->head->chunkversion = local_doc->version;
-    
-    
-    
 }
 
 char* log_flatten(){
@@ -120,6 +117,7 @@ void* receive_broadcast (void* arg){
             current_verison_log = malloc(size+1);
             strncpy(current_verison_log, temp, size);
             current_verison_log[size] = '\0';
+            printf("%s",temp);
             // lock  doc
             pthread_mutex_lock(&doc_mutex);
             edit_local_doc(current_verison_log);

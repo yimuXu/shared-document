@@ -762,11 +762,11 @@ int main(int argc, char** argv){
                     pthread_cancel(register_clients);
                     pthread_cancel(broadcast);  
                     pthread_join(broadcast,NULL);                                      
-                    FILE* fp = fopen("doc.md","w");
-                    if(fp == NULL){
-                        perror("file open failed");
-                    }
-                    markdown_print(doc,fp);
+                    // FILE* fp = fopen("doc.md","w");
+                    // if(fp == NULL){
+                    //     perror("file open failed");
+                    // }
+                    // markdown_print(doc,fp);
                     fclose(fp);
                     free(clients);
                     //pthread_mutex_lock(&mutex);
