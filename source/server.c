@@ -753,7 +753,7 @@ int main(int argc, char** argv){
                 
                 if(clientcount == 0){
                     //printf("receive quit\n");
-                    FILE* fp = fopen("doc.md","w");
+                    FILE* fp = fopen("source/doc.md","w");
                     markdown_print(doc,fp);
                     fclose(fp);
                     free(clients);
