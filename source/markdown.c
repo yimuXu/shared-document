@@ -40,7 +40,7 @@ void markdown_free(document *doc) {
         free(current);
         current = next;
     }
-    free(doc->text);
+    //free(doc->text);
     free(doc);
     doc = NULL;
 }
