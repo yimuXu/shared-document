@@ -505,7 +505,15 @@ void collect_command(){
     
     
 }
-
+void update_file(documen* doc){
+    FILE* fp = fopen("doc.md","w");
+    if(fp == NULL){
+        perror("file open failed");
+    }
+    markdown_print(doc,fp);
+    pthread_mutex_unlock(&doc_mutex);
+    fclose(fp);
+}
 // thread to broadcast message to all clients  and update the verison and do
 void* broadcast_to_all_clients_thread(void* arg) {
     int interval = *(int*)arg;
@@ -532,6 +540,7 @@ void* broadcast_to_all_clients_thread(void* arg) {
         pthread_mutex_unlock(&log_mutex);
             
         collect_command(); 
+        update_file(doc);
         
         if(num_com_success != 0){
             //lock
@@ -710,6 +719,7 @@ void* register_client(void* arg){
     return NULL;
 }
 
+
 int main(int argc, char** argv){
     // check if user input time interval for update document
     //test_msginfo_log_flow();
@@ -762,13 +772,13 @@ int main(int argc, char** argv){
                     pthread_cancel(broadcast);  
                     pthread_join(broadcast,NULL);     
                     pthread_mutex_lock(&doc_mutex);                                
-                    FILE* fp = fopen("doc.md","w");
-                    if(fp == NULL){
-                        perror("file open failed");
-                    }
-                    markdown_print(doc,fp);
-                    pthread_mutex_unlock(&doc_mutex);
-                    fclose(fp);
+                    // FILE* fp = fopen("doc.md","w");
+                    // if(fp == NULL){
+                    //     perror("file open failed");
+                    // }
+                    // markdown_print(doc,fp);
+                    // pthread_mutex_unlock(&doc_mutex);
+                    // fclose(fp);
                     free(clients);
                     //pthread_mutex_lock(&mutex);
                     quit_edit = 1;
