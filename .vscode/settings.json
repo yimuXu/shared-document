@@ -4,5 +4,6 @@
         "select.h": "c",
         "stdlib.h": "c",
         "epoll.h": "c"
-    }
+    },
+    "makefile.configureOnOpen": true
 }
