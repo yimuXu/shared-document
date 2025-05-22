@@ -579,11 +579,12 @@ void* broadcast_to_all_clients_thread(void* arg) {
         if(whole_log != NULL){
            free(whole_log); 
         }
-         whole_log =test_flatten_all(a_log);
+        free(vlog);
+        free(versionline);          
+        whole_log =test_flatten_all(a_log);
         usleep(interval * 1000); 
         //pthread_mutex_unlock(&mutex);
-        free(vlog);
-        free(versionline);        
+      
     }
     //printf("quit the broadcast\n");
     return NULL;
@@ -753,7 +754,10 @@ int main(int argc, char** argv){
                 
                 if(clientcount == 0){
                     //printf("receive quit\n");
-                    FILE* fp = fopen("source/doc.md","w");
+                    FILE* fp = fopen("doc.md","w");
+                    if(fp == NULL){
+                        perror("file open failed");
+                    }
                     markdown_print(doc,fp);
                     fclose(fp);
                     free(clients);
@@ -789,6 +793,7 @@ int main(int argc, char** argv){
     } 
     markdown_free(doc);
     log_free(a_log);
+    log_free(buflog);
     free(hp);
     //pthread_join(communication, NULL);  
     //pthread_join(handle_event, NULL);
