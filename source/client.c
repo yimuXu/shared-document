@@ -189,7 +189,7 @@ int main (int argc, char** argv){
     write(c2sfd, username, 256);
     char authorisation[256];
     read(s2cfd, authorisation, 256);
-    printf("name: %s",authorisation);
+    printf("receive: %s",authorisation);
     if(strncmp(authorisation, "read",4) == 0){
         
     }else if(strncmp(authorisation, "write",5) == 0){
@@ -236,7 +236,6 @@ int main (int argc, char** argv){
                 close(s2cfd);
                 unlink(c2s);
                 unlink(s2c);
-                exit(0);
                 break;
             }else{
                 ssize_t size_written = write(c2sfd,buf,256);

@@ -362,7 +362,7 @@ int handle_edit_command(msginfo* msg) {
     }
     if(strncmp(data, "DISCONNECT",10) == 0){
         // disconnect client
-        printf("delete user\n");
+        printf("user %s disconnected\n",username);
         pthread_mutex_lock(&clients_mutex);
         deleteclient(username);
         pthread_mutex_unlock(&clients_mutex);
@@ -647,6 +647,13 @@ void* communication_thread(void* arg){
         if(x <= 0){
             break;
         }   
+       if(strncmp(buf,"DISCONNECT",10)==0){
+            printf("user %s disconnected\n",username);
+            pthread_mutex_lock(&clients_mutex);
+            deleteclient(username);
+            pthread_mutex_unlock(&clients_mutex);            
+            break;
+        }   
         //printf("receive msg\n");
         buf[strcspn(buf, "\n")] = 0;
         msginfo* new_msg = malloc(sizeof(msginfo));
@@ -665,8 +672,7 @@ void* communication_thread(void* arg){
         //printf("receive a msg from pipe\n");
         current_client->command_count++;
         pthread_mutex_unlock(&(current_client->mutex));
-
-     
+   
     }
     printf("quit communication thread\n");
 
