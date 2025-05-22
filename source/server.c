@@ -155,13 +155,13 @@ void deleteclient(char* username){
     //pthread_mutex_lock(&mutex);
     for(int i = 0; i < clientcount; i++){
         if(strcmp(clients[i].username,username) == 0){
-            free(clients[i].username);
+            //free(clients[i].username);
             close(clients[i].c2sfd);
             close(clients[i].s2cfd);
             unlink(clients[i].c2sname);
             unlink(clients[i].s2cname);
-            free(clients[i].c2sname);
-            free(clients[i].s2cname);
+            //free(clients[i].c2sname);
+            //free(clients[i].s2cname);
             pthread_mutex_destroy(&(clients[i].mutex));
             for(int j = i; j < clientcount-1; j++){
                 clients[j] = clients[j+1];
@@ -360,7 +360,7 @@ int handle_edit_command(msginfo* msg) {
         free(log_line);
         return 0;
     }
-    if(strncmp(data, "DISCONNECT\n",11) == 0){
+    if(strncmp(data, "DISCONNECT",10) == 0){
         // disconnect client
         printf("delete user\n");
         pthread_mutex_lock(&clients_mutex);
@@ -565,7 +565,7 @@ void* broadcast_to_all_clients_thread(void* arg) {
         // broadcast to all clients
         pthread_mutex_lock(&log_mutex);
         char* vlog = test_flatten_all(buflog);
-        printf("vlog:\n%s\n",vlog);
+        //printf("vlog:\n%s\n",vlog);
        
         //printf("all the log:\n%s",x);
         pthread_mutex_unlock(&log_mutex);        
@@ -665,7 +665,7 @@ void* communication_thread(void* arg){
         //printf("receive a msg from pipe\n");
         current_client->command_count++;
         pthread_mutex_unlock(&(current_client->mutex));
-        // queue_push(new_msg);
+
      
     }
     printf("quit communication thread\n");
@@ -698,82 +698,6 @@ void* register_client(void* arg){
     }
     return NULL;
 }
-// void test_msginfo_log_flow() {
-//     printf("===== [TEST] MsgInfo Command Flow into All Log =====\n");
-
-//     // 初始化
-//     doc = markdown_init();       // 初始化空文档
-//     a_log = log_init();          // 初始化 log 链表
-//     doc->version = 0;
-//     num_com_success = 0;
-
-//     // 构造一个伪 msginfo 并模拟一次 EDIT 指令
-//     msginfo* m1 = malloc(sizeof(msginfo));
-//     strcpy(m1->username, "alice");
-//     m1->authorisation = 0;  // 0 = write
-//     m1->data = strdup("INSERT 0 Hello");
-
-//     clock_gettime(CLOCK_REALTIME, &m1->timestamp);
-//     handle_edit_command(m1);
-//     free(m1->data);
-//     free(m1);
-
-//     msginfo* m2 = malloc(sizeof(msginfo));
-//     strcpy(m2->username, "bob");
-//     m2->authorisation = 0;
-//     m2->data = strdup("INSERT 5 World");
-//     clock_gettime(CLOCK_REALTIME, &m2->timestamp);
-//     handle_edit_command(m2);
-//     free(m2->data);
-//     free(m2);
-
-//     // 模拟 VERSION + END 块（由 broadcast 模拟行为）
-//     char* vline = malloc(32);
-//     snprintf(vline, 32, "VERSION %ld\n", doc->version);
-//     versionlog* vstart = append_to_editlog(&vline);
-//     vstart->version = ++doc->version;
-//     a_log->last_start = vstart;
-//     free(vline);
-
-//     char* endline = strdup("END\n");
-//     versionlog* vend = append_to_editlog(&endline);
-//     vend->version = doc->version;
-//     a_log->last_end = vend;
-//     free(endline);
-
-//     // 打印链表结构
-//     printf("---- [Linked List] Log Entries ----\n");
-//     versionlog* cur = a_log->head;
-//     int idx = 0;
-//     while (cur) {
-//         printf("Node %d:\n", idx++);
-//         printf("  Content : %s", cur->editlog);
-//         printf("  Version : %lu\n", cur->version);
-//         printf("  Length  : %ld\n", cur->len);
-//         cur = cur->next;
-//     }
-
-//     // 打印日志输出
-//     printf("---- [Flatten All] ----\n");
-//     char* flat_all = editlog_flatten(a_log, VERSION_ALL);
-//     printf("%s", flat_all);
-//     free(flat_all);
-
-//     // 打印 last_start / last_end
-//     if (a_log->last_start)
-//         printf("Last Start: %s", a_log->last_start->editlog);
-//     else
-//         printf("Last Start: NULL\n");
-
-//     if (a_log->last_end)
-//         printf("Last End  : %s", a_log->last_end->editlog);
-//     else
-//         printf("Last End  : NULL\n");
-
-//     markdown_free(doc);
-//     log_free(a_log);
-//     printf("===== [TEST END] =====\n");
-// }
 
 int main(int argc, char** argv){
     // check if user input time interval for update document
@@ -812,8 +736,6 @@ int main(int argc, char** argv){
 
     int serverpid = getpid();
     printf("Server PID: %d\n", serverpid);
-    
-
     
     quit_edit = 0;
     char quit[256];
