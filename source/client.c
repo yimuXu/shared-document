@@ -1,37 +1,172 @@
 //TODO: client code that can send instructions to server.
 #include "markdown.h"
 
-document* doc;
+document* local_doc;
 char* editlog;
+char* current_verison_log;
+char* offset_a;
+
+all_log* local_log;
+pthread_mutex_t doc_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t log_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+
+// to analyse the log from the server, then send to edit the local document.
+void get_command(char* log){
+    char* log_copy = malloc(strlen(log)+1);
+    
+    strcpy(log_copy,log);
+    log_copy[strlen(log)] ='\0'; 
+    char* end_result = NULL;
+    char* serach = log_copy;
+    while((serach = strstr(serach, "SUCCESS")) != NULL){
+        end_result = serach;
+        serach += 7; // jeep over this word
+    }
+    if(!end_result){
+        free(log_copy);
+        return;
+    }
+
+    end_result -= 1;
+    *end_result = '\0';
+    char* tk = strtok(log_copy, " ");
+    char* username = strtok(NULL," ");
+    (void)username, (void)tk;
+    char* content = strtok(NULL, "");
+    edit_doc(local_doc,content);
+    free(log_copy);
+    return;
+}
+void edit_local_doc(char* cur_log){
+    char* cur_copy = malloc(strlen(cur_log)+1);
+    
+    strcpy(cur_copy,cur_log);
+    cur_copy[strlen(cur_log)] = '\0';
+    char* temp = cur_copy;
+    int count = 0;
+    char* tokens[256];
+    tokens[0] = strtok(temp, "\n");
+    while (tokens[count] != NULL && count < 256){
+        count++;
+        tokens[count] = strtok(NULL,"\n");
+    }
+    for(int j = 0; j< count; j++){
+        get_command(tokens[j]);
+    }
+    free(cur_copy);
+}
+void insert_original_doc_data(char* line){
+
+    char* version = strtok(line,"\n");
+    uint64_t ver = atoi(version);
+    char* size = strtok(NULL,"\n");
+    (void)size;
+    char* data = strtok(NULL, "\n");
+    local_doc->version = ver;
+    markdown_insert(local_doc,ver,0,data);
+    local_doc->head->chunkversion = local_doc->version;
+    
+    
+    
+}
+
+char* log_flatten(){
+    versionlog* cur = local_log->head;
+    char* buf;
+    size_t offset = 0;
+    if(local_log->head == NULL || local_log == NULL || local_log->head->editlog == NULL){
+        buf = malloc(1);
+        buf[0]= '\0';
+        return buf;
+    }
+    buf = malloc(local_log->size + 1);
+    while (cur){
+        for(size_t i = 0; i < cur->len;i++){
+            buf[offset + i]=cur->editlog[i];
+        }
+        offset += cur->len;
+        cur = cur->next;
+    }
+    buf[local_log->size] = '\0';
+    return buf;
+}
+void append_log_to_all(char* log_line){
+    versionlog* log = malloc(sizeof(versionlog));
+    log->len = strlen(log_line);
+    log->editlog = malloc(log->len+1);
+    strncpy(log->editlog,log_line,log->len);
+    log->editlog[log->len] ='\0';
+    log->next = NULL;
+    log->version = local_doc->version+1;
+    if(local_log->head == NULL){
+        local_log->head = log;
+        local_log->tail = log;
+    }else{
+        local_log->tail->next = log;
+        local_log->tail = log;
+        
+    }
+    local_log->size += log->len;
+}
 
 void* receive_broadcast (void* arg){
     int* s2cfd = (int*)arg;
     //printf("client is receiving broadcast from server!\n");
     while(1){
-
-        // int size = read(*s2cfd,editlog,256);
-        // if(size > 0){
-        //     // update the local documant;
-        //     editlog = realloc(editlog,size);
-        //     printf("update client doc\n");
-        // }
-        // }else if(size == 0){
-        //     printf("close pipe!");
-        //     break;
-        // }
-        char temp[256];
-        int size = read(*s2cfd, temp, 256);
+        char temp[512];
+        int size = read(*s2cfd, temp, 512);
         if (size > 0) {
-            // editlog = realloc(editlog, strlen(editlog) + size + 1);
-            // strncat(editlog, temp, size);
-            // editlog[strlen(editlog)] = '\0';
+            current_verison_log = malloc(size+1);
+            strncpy(current_verison_log, temp, size);
+            current_verison_log[size] = '\0';
+            // lock  doc
+            pthread_mutex_lock(&doc_mutex);
+            edit_local_doc(current_verison_log);
+            markdown_increment_version(local_doc);
+            pthread_mutex_unlock(&doc_mutex);
+            //lock log
+            pthread_mutex_lock(&log_mutex);
+            append_log_to_all(current_verison_log);
+            pthread_mutex_unlock(&log_mutex);
+            free(current_verison_log);
             //printf("update client doc\n");
         }
     }
     return NULL;
 }
+// void test_append_and_flatten_log() {
+//     printf("Running test: append_log_to_all + log_flatten\n");
+//     local_log = log_init();
+//     local_doc = markdown_init();
+//     local_doc->version = 0;
+
+//     append_log_to_all("EDIT user1 INSERT 0 Hello SUCCESS\n");
+//     append_log_to_all("EDIT user2 INSERT 5 World SUCCESS\n");
+
+//     char* logs = log_flatten();
+//     printf("Expected log content:\n%s\n", logs);
+//     free(logs);
+// }
+
+// void test_insert_original_doc_data() {
+//     printf("Running test: insert_original_doc_data\n");
+
+//     local_doc = markdown_init();
+
+//     // 模拟从服务器接收到的原始文档格式: 版本号\n大小\n内容
+//     char test_input[] = "1\n5\nHello\n";
+//     insert_original_doc_data(test_input);
+
+//     char* doc = markdown_flatten(local_doc);
+//     printf("Expected doc content: Hello\nActual content: %s\n", doc);
+//     free(doc);
+// }
 
 int main (int argc, char** argv){
+    // test_append_and_flatten_log();
+    // test_insert_original_doc_data();    
+    (void)argc, (void)argv;
     if (argc != 3){
         printf("please input 2 element!\n");
         return 1;
@@ -82,35 +217,56 @@ int main (int argc, char** argv){
     char authorisation[256];
     read(s2cfd, authorisation, 256);
     if(strcmp(authorisation, "read") == 0){
-        //printf("read!\n");
+        //printf("%s");
     }else if(strcmp(authorisation, "write") == 0){
-        //printf("write\n");
-        char buf[256];
-        read(s2cfd,buf,256);
-        //printf("%s",buf);
-        
+        //printf("%s",authorisation);
     }else{
-        printf("%s\n",authorisation);
+        //printf("%s\n",authorisation);
         printf("error of authorisation!\n");//debug
         return 1;
     }
-    doc = markdown_init();
-    editlog = malloc(256);
-    memset(editlog, 0, 256);
-    //close(s2cfd);
-    //int s2cfd2 = open(s2c,O_RDONLY | O_NONBLOCK);
+
+    char bufdoc[512];
+    read(s2cfd,bufdoc,512);
+    local_doc = markdown_init();
+    insert_original_doc_data(bufdoc);    
+    
+    //// initial the received doc
+    offset_a = 0;
+    local_log = log_init(); // linked list of log, a node store text of a version
     pthread_t broadcast_thread;
     pthread_create(&broadcast_thread, NULL, receive_broadcast, &s2cfd);
+
+    ///test 
+    // edit_local_doc("EDIT user1 INSERT 0 Hello SUCCESS\nEDIT user2 INSERT 0 World SUCCESS\nEND\n");
+    // markdown_increment_version(local_doc);
+    // char* doc = markdown_flatten(local_doc);
+    // printf("[DOC? Output]\n%s\n", doc);
+    // free(doc);
+
+    // char* logs = log_flatten();
+    // printf("[LOG? Output]\n%s\n", logs);
+    // free(logs);
+    ///test
     char buf[256]; 
     while(1){
            
         if(fgets(buf, 256, stdin)){
             if(strncmp(buf,"DOC?\n",5) == 0){
-                printf("%s",markdown_flatten(doc));
+                //lock
+                pthread_mutex_lock(&doc_mutex);
+                char* buf = markdown_flatten(local_doc);
+                pthread_mutex_unlock(&doc_mutex);
+                printf("%s",buf);
+                free(buf);
             }else if(strncmp(buf, "PERM?\n",6)==0){
                 printf("%s",authorisation);
             }else if(strncmp(buf, "LOG?\n",5) == 0) {
+                pthread_mutex_lock(&log_mutex);
+                editlog = log_flatten();
+                pthread_mutex_unlock(&log_mutex);
                 printf("%s\n", editlog);
+                free(editlog);
             }else if(strncmp(buf, "DISCONNECT\n",11) == 0) {
                 write(c2sfd,buf,256);
                 close(c2sfd);
@@ -121,19 +277,20 @@ int main (int argc, char** argv){
             }else{
                 ssize_t size_written = write(c2sfd,buf,256);
                 if(size_written > 0){
-                    //printf("cilent side, send command successful\n");
-                }else if (size_written<=0)
-                
-                {
-                    //printf("send command fail");    /* code */
-                }
-                
+                    //printf("cilent side, send command successful\n");  
+                }             
             }        
         }
 
     }
-    free(editlog);
-    pthread_cancel(broadcast_thread);
+    pthread_mutex_lock(&doc_mutex);
+    markdown_free(local_doc);
+    pthread_mutex_unlock(&doc_mutex);
+
+    pthread_mutex_lock(&log_mutex);
+    log_free(local_log);
+    pthread_mutex_unlock(&log_mutex);
+    pthread_cancel(broadcast_thread);//////////
     pthread_join(broadcast_thread, NULL);
     return 0;
 }

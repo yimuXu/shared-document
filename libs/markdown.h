@@ -55,4 +55,7 @@ char *markdown_flatten(const document *doc);
 
 // === Versioning ===
 void markdown_increment_version(document *doc);
+all_log* log_init();
+int edit_doc(document* doc, char* data_copy);
+void log_free(all_log* a_log);
 #endif // MARKDOWN_H

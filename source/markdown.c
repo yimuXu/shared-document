@@ -11,7 +11,7 @@ char* bfdc;
 // === Init and Free ===
 document *markdown_init(void) {
     document *doc = (document*)malloc(sizeof(document));
-    doc->text = (char*)malloc(1024);
+    //doc->text = (char*)malloc(1024);
     doc->version = 0;
     doc->size = 0;
     doc->head = (chunk*)malloc(sizeof(chunk));
@@ -765,6 +765,100 @@ void markdown_increment_version(document *doc) {
 
 }
 
+all_log* log_init(){
+    all_log* log = malloc(sizeof(all_log));
+    log->size = 0;
+    log->head = NULL;
+    log->tail = NULL;
+    log->last_start = NULL;
+    log->last_end = NULL;
+    return log;
+}
+
+int edit_doc(document* doc, char* data){
+
+    int edit_result;
+    char* data_copy = malloc(strlen(data)+1);
+    strncpy(data_copy,data,strlen(data));
+    data_copy[strlen(data)] ='\0';
+    char* commandtype = strtok(data_copy, " ");
+    if(strcmp(commandtype, "INSERT") == 0){
+        // insert command
+        int pos = atoi(strtok(NULL, " "));
+        char* content = strtok(NULL, "");
+        //content[strcspn(content, "\n")] = 0;
+        // call the insert function //////////////////////
+        //printf("insert %s at %d\n", content, pos);
+        // call insert function
+        edit_result = markdown_insert(doc,doc->version,pos, content);
+
+    }else if(strcmp(commandtype, "DEL") == 0){
+        // delete command
+        int pos = atoi(strtok(NULL, " "));
+        int len = atoi(strtok(NULL, " "));
+        edit_result = markdown_delete(doc,doc->version,pos, len);
+        //error handle
+    }else if(strcmp(commandtype, "NEWLINE") == 0){
+        int pos = atoi(strtok(NULL, " "));
+        edit_result = markdown_newline(doc, doc->version, pos);
+        //error handle
+    }else if(strcmp(commandtype, "HEADING") == 0){
+        int level = atoi(strtok(NULL, " "));
+        int pos = atoi(strtok(NULL, " "));
+        edit_result= markdown_heading(doc, doc->version,level, pos);
+        //error handle
+    }else if(strcmp(commandtype, "BOLD") == 0){
+        int start_pos = atoi(strtok(NULL, " "));
+        int end_pos = atoi(strtok(NULL, " "));
+        edit_result = markdown_bold(doc, doc->version, start_pos,end_pos);
+        //error handle
+    }else if(strcmp(commandtype, "ITALIC") == 0){
+        int start_pos = atoi(strtok(NULL, " "));
+        int end_pos = atoi(strtok(NULL, " "));
+        edit_result = markdown_italic(doc, doc->version, start_pos, end_pos);
+        //error handle
+    }else if(strcmp(commandtype, "BLOCKQUOTE") == 0){
+        int pos = atoi(strtok(NULL, " "));
+        edit_result = markdown_blockquote(doc, doc->version, pos);
+        //error handle
+    }else if(strcmp(commandtype, "ORDERED_LIST") == 0){
+        int pos = atoi(strtok(NULL, " "));
+        edit_result = markdown_ordered_list(doc, doc->version, pos);
+        //error handle
+    }else if(strcmp(commandtype, "UNORDERED_LIST") == 0){
+        int pos = atoi(strtok(NULL, " "));
+        edit_result = markdown_unordered_list(doc, doc->version, pos);
+        //error handle
+    }else if(strcmp(commandtype, "CODE") == 0){
+        int start_pos = atoi(strtok(NULL, " "));
+        int end_pos = atoi(strtok(NULL, " "));
+        edit_result = markdown_code(doc, doc->version, start_pos,end_pos);
+        //error handle
+    }else if(strcmp(commandtype, "LINK") == 0){
+        int start_pos = atoi(strtok(NULL, " "));
+        int end_pos = atoi(strtok(NULL, " "));
+        char* link = strtok(NULL, " ");
+        edit_result = markdown_link(doc, doc->version, start_pos,end_pos,link);
+        //error handle
+    }else{
+        free(data_copy);
+        return -1;
+    }
+    free(data_copy);
+    return edit_result;
+}
+
+void log_free(all_log* a_log){
+    versionlog* cur = a_log->head;
+    versionlog* temp = a_log->head;
+    while(cur){
+        temp = cur->next;
+        free(cur->editlog);
+        free(cur);
+        cur = temp;
+    }
+    free(a_log);
+}
 // int main() {
 //     document* doc = markdown_init();
 

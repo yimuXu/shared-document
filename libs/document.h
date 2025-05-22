@@ -33,6 +33,19 @@ typedef struct {
 //need to do
 // test the formmat of the edit command from client
 // test ordered list
+typedef struct versionlog {
+    uint64_t version;
+    size_t len;
+    char* editlog; // current version command log
+    struct versionlog* next;
+}versionlog;
 
+typedef struct all_log {
+    versionlog* head;
+    versionlog* tail;
+    versionlog* last_start;
+    versionlog* last_end;
+    size_t size;
+}all_log;
 
 
