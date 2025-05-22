@@ -716,6 +716,7 @@ int markdown_link(document *doc, uint64_t version, size_t start, size_t end, con
 // === Utilities === 
 void markdown_print(const document *doc, FILE *stream) {
     //(void)doc; (void)stream;
+    
     char* doctext = markdown_flatten(doc);
     //uint64_t size = strlen(doctext);
     int x = fprintf(stream,"%s",doctext);

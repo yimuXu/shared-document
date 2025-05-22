@@ -760,13 +760,15 @@ int main(int argc, char** argv){
                     //printf("receive quit\n");
                     pthread_cancel(register_clients);
                     pthread_cancel(broadcast);  
-                    pthread_join(broadcast,NULL);                                      
-                    // FILE* fp = fopen("doc.md","w");
-                    // if(fp == NULL){
-                    //     perror("file open failed");
-                    // }
-                    // markdown_print(doc,fp);
-                    // fclose(fp);
+                    pthread_join(broadcast,NULL);     
+                    pthread_mutex_lock(&doc_mutex);                                
+                    FILE* fp = fopen("doc.md","w");
+                    if(fp == NULL){
+                        perror("file open failed");
+                    }
+                    markdown_print(doc,fp);
+                    pthread_mutex_unlock(&doc_mutex);
+                    fclose(fp);
                     free(clients);
                     //pthread_mutex_lock(&mutex);
                     quit_edit = 1;
