@@ -216,9 +216,10 @@ int main (int argc, char** argv){
     write(c2sfd, username, 256);
     char authorisation[256];
     read(s2cfd, authorisation, 256);
-    if(strcmp(authorisation, "read") == 0){
-        //printf("%s");
-    }else if(strcmp(authorisation, "write") == 0){
+    printf("name: %s",authorisation);
+    if(strncmp(authorisation, "read",4) == 0){
+        
+    }else if(strncmp(authorisation, "write",5) == 0){
         //printf("%s",authorisation);
     }else{
         //printf("%s\n",authorisation);

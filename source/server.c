@@ -42,6 +42,8 @@ minheap* hp;
 versionlog* log_head;
 all_log* a_log;
 
+char* whole_log;
+
 
 struct clientpipe{
     int c2sfd;
@@ -69,7 +71,7 @@ int num_com_success;
 int checkauthorisation(char* username, int c2sfd, int s2cfd, int* rw_flag){
     // check if username is valid
     (void) s2cfd;(void) c2sfd;
-    FILE* fp = fopen("source/roles.txt", "r");
+    FILE* fp = fopen("roles.txt", "r");////////////////////////////////////
     if(fp == NULL){
         printf("open roles.txt error!\n");
         return 1;
@@ -202,7 +204,7 @@ versionlog* append_to_editlog(char** log_line){
         a_log->tail->next = newlog;
         a_log->tail = newlog;        
     }    
-    printf("len:%ld, a_log len: %ld\n",newlog->len,a_log->size);
+    //printf("len:%ld, a_log len: %ld data: %s\n",newlog->len,a_log->size, newlog->editlog);
     
     a_log->size += newlog->len;
     if(strncmp(*log_line,"VERSION",7) == 0){
@@ -230,11 +232,12 @@ char* editlog_flatten(all_log* log, uint64_t version){
         while(temp){
             size += temp->len;
             if(temp == log->last_end){
+                //printf("find a last end\n");
                 break;
             }            
             temp = temp->next;
         }
-        printf("size:%ld\n",size);
+        //printf("size:%ld\n",size);
         logdata = malloc(size+1);
         if(!logdata){
             printf("malloc failed\n");
@@ -242,14 +245,16 @@ char* editlog_flatten(all_log* log, uint64_t version){
         }
         cur = log->head;
         while(cur){
-            printf("offset : %ld\n",offset);
-            printf("line: %s",cur->editlog);
+            //printf("offset : %ld\n",offset);
+            //printf("line: %s",cur->editlog);
+
             if(cur->editlog != NULL){
                 for(size_t i = 0; i < cur->len; i++) {
                     logdata[offset + i] = cur->editlog[i];
                 }
 
                 offset += cur->len;
+                //printf("current cursor: %ld\n",offset);
             }
             if(cur == log->last_end){
                 break;
@@ -330,7 +335,7 @@ int handle_edit_command(msginfo* msg) {
     //copy and free
     char* username = msg->username;
     char* data = msg->data;
-    printf("data:%s\n",data);
+    //printf("data:%s\n",data);
     char* log_line = NULL;
     if(msg->authorisation != 0) {
         size_t size = snprintf(NULL,0, "EDIT %s %s %s %s %s %s %s\n",username,data,"Reject","UNAUTHORISED",data,"write","read");
@@ -361,10 +366,11 @@ int handle_edit_command(msginfo* msg) {
     int result = edit_doc(doc,data);
     input_log(result,username,data,&log_line);
     pthread_mutex_lock(&log_mutex);
-    printf("current log_line: %s", log_line);
-    append_to_editlog(&log_line);
+    //printf("current log_line: %s", log_line);
+    versionlog* bu = append_to_editlog(&log_line);
     pthread_mutex_unlock(&log_mutex);
     free(log_line);
+    //printf("version log: log line: %s", bu->editlog);
     return 0;
 
 }
@@ -425,7 +431,7 @@ void heap_push(minheap* heap, int size, msginfo* msg) {
     heap->msgs[i]->data[len -1] = '\0';
     
     //heap->msgs[i] = msg;
-    printf("index of this msg in heap is : %d\n",i);
+    //printf("index of this msg in heap is : %d\n",i);
 
     //sift up
     while (i > 0) {
@@ -450,7 +456,7 @@ void collect_command(){
     if(num_commands == 0){
         return;
     }
-    
+    printf("in the collect\n");
     hp->msgs = malloc(sizeof(msginfo*)*num_commands);
     hp->size = 0;
 
@@ -465,11 +471,11 @@ void collect_command(){
         clients[j].command_count = 0;
         pthread_mutex_unlock(&(clients[j].mutex));
     } 
-    printf("msg heap com num: %d\n",num_commands);
+    //printf("msg heap com num: %d\n",num_commands);
     for(int h = 0; h < num_commands; h++){
         msginfo* msg = heap_pop(hp);
-        printf("msg data: %s",msg->data);
-        printf("i m in the pop loop\n");
+        //printf("msg data: %s",msg->data);
+        //printf("i m in the pop loop\n");
         handle_edit_command(msg);
         free(msg->data);
         free(msg);   
@@ -490,30 +496,33 @@ void* broadcast_to_all_clients_thread(void* arg) {
         }
         char* bufversion = "VERSION";
         size_t len = snprintf(NULL,0,"%s %ld\n",bufversion,doc->version) + 1;
-        printf("doc version : %ld len: %ld\n",doc->version,len);
+        //printf("doc version : %ld len: %ld\n",doc->version,len);
         char* versionline = malloc(len);
         snprintf(versionline,len,"%s %ld\n",bufversion,doc->version);
         versionline[len-1] = '\0';
-        printf("versionline: %s\n",versionline);
+        //printf("versionline: %s\n",versionline);
         //lock
         pthread_mutex_lock(&log_mutex);
         versionlog* current_version_log = append_to_editlog(&versionline);
         pthread_mutex_unlock(&log_mutex);
             
         collect_command(); 
-        //pthread_mutex_lock(&mutex);
         
         if(num_com_success != 0){
             //lock
+            printf("command success more tha 0\n");
             pthread_mutex_lock(&doc_mutex);
             markdown_increment_version(doc);
             //printf("doc version:%ld\n",doc->version);
             num_com_success = 0;
-            snprintf(versionline,len,"%s %ld\n",bufversion,doc->version);            
-            current_version_log->editlog = versionline;
+            int leng = snprintf(NULL,0,"%s %ld\n",bufversion,doc->version);  
+            char* modify = malloc(leng+1);
+            snprintf(modify,leng,"%s %ld\n",bufversion,doc->version);    
+            free(current_version_log->editlog);        
+            current_version_log->editlog = modify;
             current_version_log->version = doc->version;
             pthread_mutex_lock(&log_mutex);
-            printf("current version line is %s\n",current_version_log->editlog);
+            //printf("current version line is %s\n",current_version_log->editlog);
             pthread_mutex_unlock(&log_mutex);
             pthread_mutex_unlock(&doc_mutex);
         }
@@ -527,6 +536,7 @@ void* broadcast_to_all_clients_thread(void* arg) {
         // broadcast to all clients
         pthread_mutex_lock(&log_mutex);
         char* vlog = editlog_flatten(a_log,doc->version);
+        printf("vlog: %s\n",vlog);
         //printf("vlog: \n%s",vlog);
         pthread_mutex_unlock(&log_mutex);        
         for(int i = 0; i< clientcount;i++){   
@@ -536,7 +546,11 @@ void* broadcast_to_all_clients_thread(void* arg) {
                            
             }            
         }
-
+        if(whole_log != NULL){
+           free(whole_log); 
+        }
+        
+        whole_log = editlog_flatten(a_log,VERSION_ALL);
         usleep(interval * 1000); 
         //pthread_mutex_unlock(&mutex);
         free(vlog);
@@ -604,7 +618,7 @@ void* communication_thread(void* arg){
         if(x <= 0){
             break;
         }   
-        printf("receive msg\n");
+        //printf("receive msg\n");
         buf[strcspn(buf, "\n")] = 0;
         msginfo* new_msg = malloc(sizeof(msginfo));
         size_t len =strlen(buf);
@@ -612,7 +626,7 @@ void* communication_thread(void* arg){
         strncpy(new_msg->data,buf,len);
         new_msg->data[len] = '\0';
         clock_gettime(CLOCK_REALTIME, &new_msg->timestamp);
-        printf("Time: %ld.%09ld\n", new_msg->timestamp.tv_sec, new_msg->timestamp.tv_nsec);
+        //printf("Time: %ld.%09ld\n", new_msg->timestamp.tv_sec, new_msg->timestamp.tv_nsec);
         username[strcspn(username, "\n")] = 0;
         strcpy(new_msg->username, username);
         new_msg->authorisation = rw_flag;
@@ -712,7 +726,9 @@ int main(int argc, char** argv){
     // linklist of log
     a_log = log_init();
     int time_interval = atoi(argv[1]);
-    (void)time_interval;
+    //(void)time_interval;
+    whole_log = NULL;
+
 
     //pthread_t handle_event;
     // pthread_create(&handle_event, NULL, queue_handle_thread, NULL);
@@ -769,11 +785,11 @@ int main(int argc, char** argv){
                 free(dcdata);
             }else if(strcmp(quit, "LOG?\n")== 0){
                 printf("print log!\n");
-                pthread_mutex_lock(&log_mutex);
-                char* alog = editlog_flatten(a_log,VERSION_ALL);
-                pthread_mutex_unlock(&log_mutex);
-                printf("%s", alog);
-                free(alog);
+                // pthread_mutex_lock(&log_mutex);
+                // char* alog = editlog_flatten(a_log,VERSION_ALL);
+                // pthread_mutex_unlock(&log_mutex);
+                printf("%s", whole_log);
+                //free(alog);
             }            
         }
 
