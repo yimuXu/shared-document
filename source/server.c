@@ -505,7 +505,7 @@ void collect_command(){
     
     
 }
-void update_file(documen* doc){
+void update_file(document* doc){
     FILE* fp = fopen("doc.md","w");
     if(fp == NULL){
         perror("file open failed");
