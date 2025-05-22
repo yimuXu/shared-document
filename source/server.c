@@ -766,7 +766,7 @@ int main(int argc, char** argv){
                     //     perror("file open failed");
                     // }
                     // markdown_print(doc,fp);
-                    fclose(fp);
+                    // fclose(fp);
                     free(clients);
                     //pthread_mutex_lock(&mutex);
                     quit_edit = 1;
