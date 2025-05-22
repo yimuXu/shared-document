@@ -135,33 +135,6 @@ void* receive_broadcast (void* arg){
     }
     return NULL;
 }
-// void test_append_and_flatten_log() {
-//     printf("Running test: append_log_to_all + log_flatten\n");
-//     local_log = log_init();
-//     local_doc = markdown_init();
-//     local_doc->version = 0;
-
-//     append_log_to_all("EDIT user1 INSERT 0 Hello SUCCESS\n");
-//     append_log_to_all("EDIT user2 INSERT 5 World SUCCESS\n");
-
-//     char* logs = log_flatten();
-//     printf("Expected log content:\n%s\n", logs);
-//     free(logs);
-// }
-
-// void test_insert_original_doc_data() {
-//     printf("Running test: insert_original_doc_data\n");
-
-//     local_doc = markdown_init();
-
-//     // 模拟从服务器接收到的原始文档格式: 版本号\n大小\n内容
-//     char test_input[] = "1\n5\nHello\n";
-//     insert_original_doc_data(test_input);
-
-//     char* doc = markdown_flatten(local_doc);
-//     printf("Expected doc content: Hello\nActual content: %s\n", doc);
-//     free(doc);
-// }
 
 int main (int argc, char** argv){
     // test_append_and_flatten_log();
@@ -238,17 +211,6 @@ int main (int argc, char** argv){
     pthread_t broadcast_thread;
     pthread_create(&broadcast_thread, NULL, receive_broadcast, &s2cfd);
 
-    ///test 
-    // edit_local_doc("EDIT user1 INSERT 0 Hello SUCCESS\nEDIT user2 INSERT 0 World SUCCESS\nEND\n");
-    // markdown_increment_version(local_doc);
-    // char* doc = markdown_flatten(local_doc);
-    // printf("[DOC? Output]\n%s\n", doc);
-    // free(doc);
-
-    // char* logs = log_flatten();
-    // printf("[LOG? Output]\n%s\n", logs);
-    // free(logs);
-    ///test
     char buf[256]; 
     while(1){
            
@@ -270,7 +232,11 @@ int main (int argc, char** argv){
                 free(editlog);
             }else if(strncmp(buf, "DISCONNECT\n",11) == 0) {
                 write(c2sfd,buf,256);
-
+                close(c2sfd);
+                close(s2cfd);
+                unlink(c2s);
+                unlink(s2c);
+                exit(0);
                 break;
             }else{
                 ssize_t size_written = write(c2sfd,buf,256);
@@ -290,9 +256,6 @@ int main (int argc, char** argv){
     pthread_mutex_unlock(&log_mutex);
     pthread_cancel(broadcast_thread);//////////
     pthread_join(broadcast_thread, NULL);
-    close(c2sfd);
-    close(s2cfd);
-    unlink(c2s);
-    unlink(s2c);
+
     return 0;
 }
