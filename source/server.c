@@ -509,11 +509,11 @@ void* broadcast_to_all_clients_thread(void* arg) {
             markdown_increment_version(doc);
             //printf("doc version:%ld\n",doc->version);
             num_com_success = 0;
-            snprintf(versionline,len,"%s %ld\n",bufversion,doc->version);
-            pthread_mutex_lock(&log_mutex);
+            snprintf(versionline,len,"%s %ld\n",bufversion,doc->version);            
             current_version_log->editlog = versionline;
-            printf("current version line is %s\n",current_version_log->editlog);
             current_version_log->version = doc->version;
+            pthread_mutex_lock(&log_mutex);
+            printf("current version line is %s\n",current_version_log->editlog);
             pthread_mutex_unlock(&log_mutex);
             pthread_mutex_unlock(&doc_mutex);
         }
@@ -536,11 +536,11 @@ void* broadcast_to_all_clients_thread(void* arg) {
                            
             }            
         }
-        free(vlog);
-        free(versionline);
+
         usleep(interval * 1000); 
         //pthread_mutex_unlock(&mutex);
-        
+        free(vlog);
+        free(versionline);        
     }
     //printf("quit the broadcast\n");
     return NULL;
@@ -601,9 +601,9 @@ void* communication_thread(void* arg){
     while(1){
         char buf[512];///// NEED TO CHANGE to check the len
         int x =read(c2sfd,buf,512);
-        if(x == 0){
+        if(x <= 0){
             break;
-        }
+        }   
         printf("receive msg\n");
         buf[strcspn(buf, "\n")] = 0;
         msginfo* new_msg = malloc(sizeof(msginfo));
@@ -623,11 +623,7 @@ void* communication_thread(void* arg){
         current_client->command_count++;
         pthread_mutex_unlock(&(current_client->mutex));
         // queue_push(new_msg);
-        
-        if(strncmp(new_msg->data, "DISCONNECT\n", 11) == 0){
-            
-            break;
-        }
+     
     }
     printf("quit communication thread\n");
 

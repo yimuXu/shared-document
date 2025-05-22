@@ -269,10 +269,7 @@ int main (int argc, char** argv){
                 free(editlog);
             }else if(strncmp(buf, "DISCONNECT\n",11) == 0) {
                 write(c2sfd,buf,256);
-                close(c2sfd);
-                close(s2cfd);
-                unlink(c2s);
-                unlink(s2c);
+
                 break;
             }else{
                 ssize_t size_written = write(c2sfd,buf,256);
@@ -292,5 +289,9 @@ int main (int argc, char** argv){
     pthread_mutex_unlock(&log_mutex);
     pthread_cancel(broadcast_thread);//////////
     pthread_join(broadcast_thread, NULL);
+    close(c2sfd);
+    close(s2cfd);
+    unlink(c2s);
+    unlink(s2c);
     return 0;
 }
