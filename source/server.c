@@ -754,6 +754,9 @@ int main(int argc, char** argv){
                 
                 if(clientcount == 0){
                     //printf("receive quit\n");
+                    pthread_cancel(register_clients);
+                    pthread_cancel(broadcast);  
+                    pthread_join(broadcast,NULL);                                      
                     FILE* fp = fopen("doc.md","w");
                     if(fp == NULL){
                         perror("file open failed");
@@ -765,8 +768,7 @@ int main(int argc, char** argv){
                     quit_edit = 1;
                     // pthread_cond_broadcast(&queue.cond); // wake up
                     //pthread_mutex_unlock(&mutex);
-                    pthread_cancel(register_clients);
-                    pthread_cancel(broadcast);
+
                     //pthread_cancel(handle_event);
                     break;
                 }else{
@@ -797,7 +799,7 @@ int main(int argc, char** argv){
     free(hp);
     //pthread_join(communication, NULL);  
     //pthread_join(handle_event, NULL);
-    pthread_join(broadcast,NULL);
+
     printf("finish the editing\n");
     return 0;
     
