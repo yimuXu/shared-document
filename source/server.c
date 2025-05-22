@@ -558,7 +558,6 @@ void* broadcast_to_all_clients_thread(void* arg) {
             pthread_mutex_unlock(&log_mutex);
             pthread_mutex_unlock(&doc_mutex);
         }
-
         //edit the log 
         char* end = "END\n";
         pthread_mutex_lock(&log_mutex);
