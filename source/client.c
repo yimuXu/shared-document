@@ -189,7 +189,7 @@ int main (int argc, char** argv){
     write(c2sfd, username, 256);
     char authorisation[256];
     read(s2cfd, authorisation, 256);
-    printf("receive: %s",authorisation);
+    //printf("receive: %s",authorisation);
     if(strncmp(authorisation, "read",4) == 0){
         
     }else if(strncmp(authorisation, "write",5) == 0){

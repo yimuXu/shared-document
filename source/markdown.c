@@ -718,7 +718,10 @@ void markdown_print(const document *doc, FILE *stream) {
     //(void)doc; (void)stream;
     char* doctext = markdown_flatten(doc);
     //uint64_t size = strlen(doctext);
-    fprintf(stream,"%s",doctext);
+    int x = fprintf(stream,"%s",doctext);
+    if(x < 0 ){
+        printf("fprint failed\n");
+    }
     free(doctext);
 
 }

@@ -155,13 +155,17 @@ void deleteclient(char* username){
     //pthread_mutex_lock(&mutex);
     for(int i = 0; i < clientcount; i++){
         if(strcmp(clients[i].username,username) == 0){
-            //free(clients[i].username);
             close(clients[i].c2sfd);
             close(clients[i].s2cfd);
             unlink(clients[i].c2sname);
             unlink(clients[i].s2cname);
-            //free(clients[i].c2sname);
-            //free(clients[i].s2cname);
+            // for(int j = 0; j < 50; j++){
+            //     if(clients[i].mq[j] != NULL){
+            //         free(clients[i].mq[j]->data);
+            //         free(clients[i].mq[j]);                    
+            //     }
+
+            // }
             pthread_mutex_destroy(&(clients[i].mutex));
             for(int j = i; j < clientcount-1; j++){
                 clients[j] = clients[j+1];
@@ -460,6 +464,9 @@ void heap_push(minheap* heap, int size, msginfo* msg) {
         heap->msgs[parent] = temp;
         i = parent;
     }
+    free(msg->data);
+    free(msg);
+
 }
 void collect_command(){
     int num_commands = 0;
@@ -479,8 +486,6 @@ void collect_command(){
         pthread_mutex_lock(&(clients[j].mutex));
         for(int k = 0; k < clients[j].command_count; k++){
             heap_push(hp,num_commands, clients[j].mq[k]);
-            free(clients[j].mq[k]->data);
-            free(clients[j].mq[k]);
             clients[j].mq[k] = NULL;
         }
         clients[j].command_count = 0;
@@ -523,7 +528,7 @@ void* broadcast_to_all_clients_thread(void* arg) {
         pthread_mutex_lock(&log_mutex);
         versionlog* current_version_log = append_to_editlog(a_log,&versionline);
         versionlog* ver = append_to_editlog(buflog,&versionline);
-        a_log->last_start = current_version_log;
+        //a_log->last_start = current_version_log;
         pthread_mutex_unlock(&log_mutex);
             
         collect_command(); 
@@ -566,7 +571,7 @@ void* broadcast_to_all_clients_thread(void* arg) {
         pthread_mutex_lock(&log_mutex);
         char* vlog = test_flatten_all(buflog);
         //printf("vlog:\n%s\n",vlog);
-       
+       log_free(buflog);
         //printf("all the log:\n%s",x);
         pthread_mutex_unlock(&log_mutex);        
         for(int i = 0; i< clientcount;i++){   
@@ -766,10 +771,6 @@ int main(int argc, char** argv){
                     free(clients);
                     //pthread_mutex_lock(&mutex);
                     quit_edit = 1;
-                    // pthread_cond_broadcast(&queue.cond); // wake up
-                    //pthread_mutex_unlock(&mutex);
-
-                    //pthread_cancel(handle_event);
                     break;
                 }else{
                     printf("QUIT rejected, %d clients still connected.\n", clientcount);
@@ -795,7 +796,6 @@ int main(int argc, char** argv){
     } 
     markdown_free(doc);
     log_free(a_log);
-    log_free(buflog);
     free(hp);
     //pthread_join(communication, NULL);  
     //pthread_join(handle_event, NULL);
