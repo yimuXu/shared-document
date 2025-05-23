@@ -355,9 +355,9 @@ int handle_edit_command(msginfo* msg) {
     //printf("data:%s\n",data);
     char* log_line = NULL;
     if(msg->authorisation != 0) {
-        size_t size = snprintf(NULL,0, "EDIT %s %s\n %s %s\n",username,data,"Reject","UNAUTHORISED");
+        size_t size = snprintf(NULL,0, "EDIT %s %s %s %s %s %s %s\n",username,data,"Reject","UNAUTHORISED",data,"write","read\n");
         log_line = realloc(log_line,size);
-        snprintf(log_line,size, "EDIT %s %s\n %s %s\n",username,data, "Reject","UNAUTHORISED");
+        snprintf(log_line,size, "EDIT %s %s %s %s %s %s %s\n",username,data,"Reject","UNAUTHORISED",data,"write","read\n");
         pthread_mutex_lock(&log_mutex);
         append_to_editlog(a_log,&log_line);
         pthread_mutex_unlock(&log_mutex);
@@ -550,7 +550,7 @@ void* broadcast_to_all_clients_thread(void* arg) {
         versionlog* ver = append_to_editlog(buflog,&versionline);
        //pthread_mutex_unlock(&buflog_mutex);
         //a_log->last_start = current_version_log;
-        usleep(interval*1000); 
+        
             
         collect_command(); 
         update_file(doc);
@@ -579,24 +579,19 @@ void* broadcast_to_all_clients_thread(void* arg) {
             //printf("current version line is %s\n",current_version_log->editlog);
             pthread_mutex_unlock(&log_mutex);
             pthread_mutex_unlock(&doc_mutex);
+        
+            //edit the log 
+            char* end = "END\n";
+            pthread_mutex_lock(&log_mutex);
+            versionlog* end_log = append_to_editlog(a_log,&end);
+            a_log->last_end = end_log;
+            pthread_mutex_unlock(&log_mutex);
+            append_to_editlog(buflog,&end);
         }
-        //edit the log 
-        char* end = "END\n";
-        pthread_mutex_lock(&log_mutex);
-        versionlog* end_log = append_to_editlog(a_log,&end);
-        a_log->last_end = end_log;
-        pthread_mutex_unlock(&log_mutex);
-
-        //pthread_mutex_lock(&buflog_mutex);
-        append_to_editlog(buflog,&end);
-        //pthread_mutex_lock(&buflog_mutex);
         // broadcast to all clients
-        //pthread_mutex_lock(&buflog_mutex);
         char* vlog = test_flatten_all(buflog);
        
-       //pthread_mutex_unlock(&buflog_mutex);
-        //printf("all the log:\n%s",x);
-        printf("send: %ssize: %ld\n",vlog,buflog->size);
+        //printf("send: %ssize: %ld\n",vlog,buflog->size);
         for(int i = 0; i< clientcount;i++){   
             if(clients[i].s2cfd){
                 int fd = clients[i].s2cfd;
@@ -611,7 +606,7 @@ void* broadcast_to_all_clients_thread(void* arg) {
         free(vlog);
         free(versionline);          
         whole_log =test_flatten_all(a_log);
-        
+        usleep(interval*1000); 
         //pthread_mutex_unlock(&mutex);
       
     }
