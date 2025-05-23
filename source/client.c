@@ -113,11 +113,12 @@ void* receive_broadcast (void* arg){
     while(1){
         char temp[512];
         int size = read(*s2cfd, temp, 512);
+        temp[size] ='\0';
         if (size > 0) {
             current_verison_log = malloc(size+1);
             strncpy(current_verison_log, temp, size);
             current_verison_log[size] = '\0';
-            printf("%s",temp);
+            printf("receive:\n%ssize:%d\njiewei\n",current_verison_log,size);
             // lock  doc
             pthread_mutex_lock(&doc_mutex);
             edit_local_doc(current_verison_log);

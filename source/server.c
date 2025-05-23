@@ -20,6 +20,7 @@
 #define MAX_CLIENT 10
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t log_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t buflog_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t doc_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t clients_mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -359,8 +360,11 @@ int handle_edit_command(msginfo* msg) {
         snprintf(log_line,size, "EDIT %s %s %s %s %s %s %s\n",username,data,"Reject","UNAUTHORISED",data,"write","read");
         pthread_mutex_lock(&log_mutex);
         append_to_editlog(a_log,&log_line);
-        append_to_editlog(buflog,&log_line);//////////
         pthread_mutex_unlock(&log_mutex);
+
+        //pthread_mutex_lock(&buflog_mutex);
+        append_to_editlog(buflog,&log_line);//////////
+        //pthread_mutex_unlock(&buflog_mutex);
         free(log_line);
         return 0;
     }
@@ -385,9 +389,12 @@ int handle_edit_command(msginfo* msg) {
     pthread_mutex_lock(&log_mutex);
     //printf("current log_line: %s", log_line);
     versionlog* bu = append_to_editlog(a_log,&log_line);
-    append_to_editlog(buflog,&log_line);////////////////////////
-    bu->version += 1;
     pthread_mutex_unlock(&log_mutex);
+    //pthread_mutex_lock(&buflog_mutex);
+    append_to_editlog(buflog,&log_line);////////////////////////
+    //pthread_mutex_unlock(&buflog_mutex);
+    bu->version += 1;
+    
     free(log_line);
     //printf("handle edit command log in the new log: %s", bu->editlog);
     return 0;
@@ -510,6 +517,7 @@ void update_file(document* doc){
     if(fp == NULL){
         perror("file open failed");
     }
+    //printf("file open!\n");
     markdown_print(doc,fp);
     pthread_mutex_unlock(&doc_mutex);
     fclose(fp);
@@ -522,7 +530,9 @@ void* broadcast_to_all_clients_thread(void* arg) {
         if(quit_edit == 1){
             break;
         }
+        //pthread_mutex_lock(&buflog_mutex);
         buflog = log_init();
+        //pthread_mutex_unlock(&buflog_mutex);
         pthread_mutex_lock(&doc_mutex);
         char* bufversion = "VERSION";
         size_t len = snprintf(NULL,0,"%s %ld\n",bufversion,doc->version) + 1;
@@ -535,9 +545,12 @@ void* broadcast_to_all_clients_thread(void* arg) {
         //lock
         pthread_mutex_lock(&log_mutex);
         versionlog* current_version_log = append_to_editlog(a_log,&versionline);
-        versionlog* ver = append_to_editlog(buflog,&versionline);
-        //a_log->last_start = current_version_log;
         pthread_mutex_unlock(&log_mutex);
+        //pthread_mutex_lock(&buflog_mutex);
+        versionlog* ver = append_to_editlog(buflog,&versionline);
+       //pthread_mutex_unlock(&buflog_mutex);
+        //a_log->last_start = current_version_log;
+        
             
         collect_command(); 
         update_file(doc);
@@ -572,18 +585,20 @@ void* broadcast_to_all_clients_thread(void* arg) {
         pthread_mutex_lock(&log_mutex);
         versionlog* end_log = append_to_editlog(a_log,&end);
         a_log->last_end = end_log;
-        append_to_editlog(buflog,&end);
         pthread_mutex_unlock(&log_mutex);
-        
+
+        //pthread_mutex_lock(&buflog_mutex);
+        append_to_editlog(buflog,&end);
+        //pthread_mutex_lock(&buflog_mutex);
         // broadcast to all clients
-        pthread_mutex_lock(&log_mutex);
+        //pthread_mutex_lock(&buflog_mutex);
         char* vlog = test_flatten_all(buflog);
-        //printf("vlog:\n%s\n",vlog);
-       log_free(buflog);
+       
+       //pthread_mutex_unlock(&buflog_mutex);
         //printf("all the log:\n%s",x);
-        pthread_mutex_unlock(&log_mutex);        
+        printf("send: %ssize: %ld\n",vlog,buflog->size);
         for(int i = 0; i< clientcount;i++){   
-            if(clients->s2cfd){
+            if(clients[i].s2cfd){
                 int fd = clients[i].s2cfd;
                 write(fd,vlog,strlen(vlog));
                            
@@ -592,6 +607,7 @@ void* broadcast_to_all_clients_thread(void* arg) {
         if(whole_log != NULL){
            free(whole_log); 
         }
+        log_free(buflog);
         free(vlog);
         free(versionline);          
         whole_log =test_flatten_all(a_log);
