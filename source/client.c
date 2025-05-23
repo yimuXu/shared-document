@@ -113,20 +113,22 @@ void* receive_broadcast (void* arg){
     while(1){
         char temp[512];
         int size = read(*s2cfd, temp, 512);
-        //temp[size-1] ='\0';
+        temp[size] ='\0';
         if (size > 0) {
-            current_verison_log = malloc(size+1);
-            strncpy(current_verison_log, temp, size);
-            current_verison_log[size] = '\0';
+            // current_verison_log = malloc(size+1);
+            // strncpy(current_verison_log, temp, size);
+            // current_verison_log[size] = '\0';
             //printf("receive:\n%ssize:%d\njiewei\n",temp,size);
             // lock  doc
             pthread_mutex_lock(&doc_mutex);
-            edit_local_doc(current_verison_log);
+            //edit_local_doc(current_verison_log);
+            edit_local_doc(temp);///////////////
             markdown_increment_version(local_doc);
             pthread_mutex_unlock(&doc_mutex);
             //lock log
             pthread_mutex_lock(&log_mutex);
-            append_log_to_all(current_verison_log);
+           // append_log_to_all(current_verison_log);//////////
+           append_log_to_all(temp);
             pthread_mutex_unlock(&log_mutex);
             free(current_verison_log);
             //printf("update client doc\n");
