@@ -85,7 +85,7 @@ int checkauthorisation(char* username, int c2sfd, int s2cfd, int* rw_flag){
         char* token = strtok(line, " \t");
         if(strcmp(token, username) == 0){
             char* edit = strtok(NULL, " \t");
-            write(s2cfd, edit, strlen(edit)+1);
+            write(s2cfd, edit, strlen(edit));
             if(strncmp(edit,"write",strlen(edit)+1) == 0){
                 *rw_flag = 0;
             }else{
