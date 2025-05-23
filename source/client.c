@@ -129,7 +129,7 @@ void* receive_broadcast (void* arg){
             //lock log
             pthread_mutex_lock(&log_mutex);
             //append_log_to_all(current_verison_log);//////////
-            append_log_to_all(temp);
+            //append_log_to_all(temp);
             pthread_mutex_unlock(&log_mutex);
             free(current_verison_log);
             //printf("update client doc\n");
