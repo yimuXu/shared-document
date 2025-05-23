@@ -118,7 +118,7 @@ void* receive_broadcast (void* arg){
             current_verison_log = malloc(size+1);
             strncpy(current_verison_log, temp, size);
             current_verison_log[size] = '\0';
-            printf("receive:\n%ssize:%d\njiewei\n",current_verison_log,size);
+            printf("receive:\n%ssize:%d\njiewei\n",temp,size);
             // lock  doc
             pthread_mutex_lock(&doc_mutex);
             edit_local_doc(current_verison_log);

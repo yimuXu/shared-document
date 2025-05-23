@@ -355,9 +355,9 @@ int handle_edit_command(msginfo* msg) {
     //printf("data:%s\n",data);
     char* log_line = NULL;
     if(msg->authorisation != 0) {
-        size_t size = snprintf(NULL,0, "EDIT %s %s %s %s %s %s %s\n",username,data,"Reject","UNAUTHORISED",data,"write","read");
+        size_t size = snprintf(NULL,0, "EDIT %s %s %s %s %s %s %s\n",username,data,"Reject","UNAUTHORISED",data,"write","read\n");
         log_line = realloc(log_line,size);
-        snprintf(log_line,size, "EDIT %s %s %s %s %s %s %s\n",username,data,"Reject","UNAUTHORISED",data,"write","read");
+        snprintf(log_line,size, "EDIT %s %s %s %s %s %s %s\n",username,data,"Reject","UNAUTHORISED",data,"write","read\n");
         pthread_mutex_lock(&log_mutex);
         append_to_editlog(a_log,&log_line);
         pthread_mutex_unlock(&log_mutex);
