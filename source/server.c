@@ -82,10 +82,10 @@ int checkauthorisation(char* username, int c2sfd, int s2cfd, int* rw_flag){
     while(fgets(line, sizeof(line), fp)){
         username[strcspn(username, "\n")] = 0; // remove  newline character username from client
         //line[strcspn(line, "\n")] = 0; // remove newline character of file
-        char* token = strtok(line, " \t");
+        char* token = strtok(line, " \t\n");
         //printf("token:%sis this\n",token);
         if(strcmp(token, username) == 0){
-            char* edit = strtok(NULL, " \t");
+            char* edit = strtok(NULL, " \t\n");
             //printf("user:%sis%sjiewei",token,edit);
             write(s2cfd, edit, strlen(edit));
             if(strncmp(edit,"write",strlen(edit)+1) == 0){
@@ -713,7 +713,7 @@ int main(int argc, char** argv){
                     printf("QUIT rejected, %d clients still connected.\n", clientcount);
                 }
             }else if(strcmp(quit, "DOC?\n") == 0){
-                printf("print doc\n");
+                //printf("print doc\n");
                 //lock
                 pthread_mutex_lock(&doc_mutex);
                 dcdata = markdown_flatten(doc);
