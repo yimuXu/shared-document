@@ -83,8 +83,10 @@ int checkauthorisation(char* username, int c2sfd, int s2cfd, int* rw_flag){
         username[strcspn(username, "\n")] = 0; // remove  newline character username from client
         //line[strcspn(line, "\n")] = 0; // remove newline character of file
         char* token = strtok(line, " \t");
+        //printf("token:%sis this\n",token);
         if(strcmp(token, username) == 0){
             char* edit = strtok(NULL, " \t");
+            //printf("user:%sis%sjiewei",token,edit);
             write(s2cfd, edit, strlen(edit));
             if(strncmp(edit,"write",strlen(edit)+1) == 0){
                 *rw_flag = 0;
@@ -160,13 +162,6 @@ void deleteclient(char* username){
             close(clients[i].s2cfd);
             unlink(clients[i].c2sname);
             unlink(clients[i].s2cname);
-            // for(int j = 0; j < 50; j++){
-            //     if(clients[i].mq[j] != NULL){
-            //         free(clients[i].mq[j]->data);
-            //         free(clients[i].mq[j]);                    
-            //     }
-
-            // }
             pthread_mutex_destroy(&(clients[i].mutex));
             for(int j = i; j < clientcount-1; j++){
                 clients[j] = clients[j+1];
@@ -212,6 +207,7 @@ versionlog* append_to_editlog(all_log* lg, char** log_line){
     return newlog;
 }
 
+// flatten the log linked list to text
 char* test_flatten_all(all_log* lg){
     char* da;
     size_t of =0;
@@ -244,86 +240,6 @@ char* test_flatten_all(all_log* lg){
     return da;
 }
 
-// flatten the log linked list to text
-char* editlog_flatten(all_log* log, uint64_t version){
-    char* logdata;
-    size_t offset = 0;
-    versionlog* cur;
-    if(log->size == 0 || log->head == NULL || log->head->editlog == NULL){
-        logdata = malloc(1);
-        logdata[0] = '\0';
-        printf("log is null\n");
-        return logdata;
-    }
-    if (version == VERSION_ALL){
-        size_t size = 0;
-        versionlog* temp = log->head;
-        while(temp){
-            size += temp->len;
-            if(temp == log->last_end){
-                //printf("find a last end size: %ld\n",size);
-                break;
-            }            
-            temp = temp->next;
-        }
-        logdata = malloc(size+1);
-        if(!logdata){
-            printf("malloc failed\n");
-            return NULL;
-        }
-        cur = log->head;
-        while(cur){
-            //printf("offset : %ld\n",offset);
-            //printf("line: %s",cur->editlog);
-
-            if(cur->editlog != NULL){
-                for(size_t i = 0; i < cur->len; i++) {
-                    logdata[offset + i] = cur->editlog[i];
-                }
-
-                offset += cur->len;
-                //printf("current cursor: %ld\n",offset);
-            }
-            if(cur == log->last_end){
-                break;
-            }
-            
-            cur = cur->next;
-        }
-        logdata[size] ='\0';
-    }else{
-        //printf("current version log\n");
-        cur = log->last_start;
-        //calculate the version chunk size
-        size_t size = 0;
-        versionlog* temp = cur;
-        while(temp){
-
-            if(temp->version == version){
-                size += strlen(temp->editlog);
-            }
-            if(temp == log->last_end){
-                break;
-            }            
-            temp = temp->next;
-        }
-        logdata = malloc(size+1);
-        while(cur){
-            //if(cur->version == version){
-                for(size_t i = 0; i < strlen(temp->editlog); i++) {
-                    logdata[offset + i] = cur->editlog[i];
-                }
-                offset += cur->len;                
-            //}
-            if(cur == log->last_end){
-                break;
-            }
-            cur = cur->next;
-        }
-        logdata[size] = '\0';
-    }
-    return logdata;
-}
 // append the command infomation into log;
 void input_log(int edit_result,char* username_copy, char* data_copy, char** log_line){
     if(edit_result == 0){
@@ -579,15 +495,14 @@ void* broadcast_to_all_clients_thread(void* arg) {
             //printf("current version line is %s\n",current_version_log->editlog);
             pthread_mutex_unlock(&log_mutex);
             pthread_mutex_unlock(&doc_mutex);
-        
-            //edit the log 
-            char* end = "END\n";
-            pthread_mutex_lock(&log_mutex);
-            versionlog* end_log = append_to_editlog(a_log,&end);
-            a_log->last_end = end_log;
-            pthread_mutex_unlock(&log_mutex);
-            append_to_editlog(buflog,&end);
         }
+        //edit the log 
+        char* end = "END\n";
+        pthread_mutex_lock(&log_mutex);
+        versionlog* end_log = append_to_editlog(a_log,&end);
+        a_log->last_end = end_log;
+        pthread_mutex_unlock(&log_mutex);
+        append_to_editlog(buflog,&end);
         // broadcast to all clients
         char* vlog = test_flatten_all(buflog);
        
