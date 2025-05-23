@@ -130,7 +130,7 @@ void* receive_broadcast (void* arg){
             pthread_mutex_unlock(&log_mutex);
             free(current_verison_log);
             //printf("update client doc\n");
-            memset(temp, 0, sizeof(temp));
+            //memset(temp, 0, sizeof(temp));
         }
     }
     return NULL;
