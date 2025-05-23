@@ -550,7 +550,7 @@ void* broadcast_to_all_clients_thread(void* arg) {
         versionlog* ver = append_to_editlog(buflog,&versionline);
        //pthread_mutex_unlock(&buflog_mutex);
         //a_log->last_start = current_version_log;
-        
+        usleep(interval * 1000); 
             
         collect_command(); 
         update_file(doc);
@@ -611,7 +611,7 @@ void* broadcast_to_all_clients_thread(void* arg) {
         free(vlog);
         free(versionline);          
         whole_log =test_flatten_all(a_log);
-        usleep(interval * 1000); 
+        
         //pthread_mutex_unlock(&mutex);
       
     }
