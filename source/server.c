@@ -741,7 +741,7 @@ int main(int argc, char** argv){
     markdown_free(doc);
     log_free(a_log);
     free(hp);
-    pthread_join(communication, NULL);  
+    pthread_join(communication_thread, NULL);  
 
     printf("finish the editing\n");
     return 0;
