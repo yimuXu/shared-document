@@ -184,7 +184,9 @@ versionlog* append_to_editlog(all_log* lg, char** log_line){
     newlog->editlog = malloc(newlog->len+1);
     strncpy(newlog->editlog, *log_line,newlog->len);
     newlog->editlog[newlog->len] = '\0';
+    pthread_mutex_lock(&doc_mutex);
     newlog->version = doc->version;
+    pthread_mutex_unlock(&doc_mutex);
     newlog->next = NULL;
     if(lg == NULL || lg->head == NULL || lg->head->editlog == NULL){
         lg->head = newlog;
@@ -494,9 +496,9 @@ void* broadcast_to_all_clients_thread(void* arg) {
             ver->editlog = modify2;
             ver->version = doc->version;
 
-            pthread_mutex_lock(&log_mutex);
+            //pthread_mutex_lock(&log_mutex);
             //printf("current version line is %s\n",current_version_log->editlog);
-            pthread_mutex_unlock(&log_mutex);
+            //pthread_mutex_unlock(&log_mutex);
             pthread_mutex_unlock(&doc_mutex);
         }
         //edit the log 
@@ -574,7 +576,7 @@ void* communication_thread(void* arg){
     pthread_mutex_unlock(&clients_mutex);
     pthread_mutex_lock(&doc_mutex);
     dcdata = markdown_flatten(doc);
-    pthread_mutex_unlock(&doc_mutex);
+    
     size_t needed = snprintf(NULL, 0, "%ld\n%ld\n%s\n", doc->version, (uint64_t)strlen(dcdata), dcdata) + 1;
     bufferdoc = malloc(needed);
     if (!bufferdoc) {
@@ -582,6 +584,7 @@ void* communication_thread(void* arg){
         // handle error
     }
     snprintf(bufferdoc, needed, "%ld\n%ld\n%s\n",doc->version, (uint64_t)strlen(dcdata), dcdata);
+    pthread_mutex_unlock(&doc_mutex);
     int x = write(s2cfd, bufferdoc, strlen(bufferdoc));
     if (x == -1) {
         printf("write error:\n");
@@ -704,7 +707,7 @@ int main(int argc, char** argv){
         //printf("server side debug is running!\n");
         if(fgets(quit, 256, stdin)){
             if(strcmp(quit, "QUIT\n") == 0){
-                
+                pthread_mutex_lock(&clients_mutex);
                 if(clientcount == 0){
                     //printf("receive quit\n");
                     pthread_cancel(register_clients);
@@ -718,6 +721,7 @@ int main(int argc, char** argv){
                 }else{
                     printf("QUIT rejected, %d clients still connected.\n", clientcount);
                 }
+                pthread_mutex_unlock(&clients_mutex);
             }else if(strcmp(quit, "DOC?\n") == 0){
                 //printf("print doc\n");
                 //lock
@@ -731,11 +735,11 @@ int main(int argc, char** argv){
                 // pthread_mutex_lock(&log_mutex);
                 // char* alog = editlog_flatten(a_log,VERSION_ALL);
                 // pthread_mutex_unlock(&log_mutex);
-                //pthread_mutex_lock(&log_mutex);
+                pthread_mutex_lock(&log_mutex);
                 //whole_log = test_flatten_all(a_log);
                 printf("%s", whole_log);
                 //free(whole_log);
-                //pthread_mutex_unlock(&log_mutex);
+                pthread_mutex_unlock(&log_mutex);
             }            
         }
 
