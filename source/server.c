@@ -101,7 +101,7 @@ int checkauthorisation(char* username, int c2sfd, int s2cfd, int* rw_flag){
 
     }
     write(s2cfd,"Reject UNAUTHORISED\n", 21); //debug
-    printf("Reject UNAUTHORISED\n");
+    printf("%s,Reject UNAUTHORISED\n",username);
     sleep(1);
     fclose(fp);
     return 1;
