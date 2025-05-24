@@ -585,7 +585,7 @@ int markdown_ordered_list(document *doc, uint64_t version, size_t pos) {
     //printf(" i :%c\n",i);
     snprintf(buf, sizeof(buf), "%c.", i);
     //printf(" buf :%s\n",buf);
-    modify_order_number(doc,version, pos, i);
+    //modify_order_number(doc,version, pos, i);
     int result;
     int is_space = check_next_char(doc, version, pos, spa);
     if(is_space == 0){
