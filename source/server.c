@@ -655,7 +655,7 @@ void* register_client(void* arg){
         }else if (sig == SIGRTMIN) {
             // initial thread 
             pthread_create(&communication, NULL, communication_thread, &clientpid);      
-            pthread_detach(communication);            
+            //pthread_detach(communication);            
         }
     }
     return NULL;
@@ -731,14 +731,8 @@ int main(int argc, char** argv){
                 printf("%s",dcdata);
                 free(dcdata);
             }else if(strcmp(quit, "LOG?\n")== 0){
-                //printf("print log!\n");
-                // pthread_mutex_lock(&log_mutex);
-                // char* alog = editlog_flatten(a_log,VERSION_ALL);
-                // pthread_mutex_unlock(&log_mutex);
                 pthread_mutex_lock(&log_mutex);
-                //whole_log = test_flatten_all(a_log);
                 printf("%s", whole_log);
-                //free(whole_log);
                 pthread_mutex_unlock(&log_mutex);
             }            
         }
@@ -747,8 +741,7 @@ int main(int argc, char** argv){
     markdown_free(doc);
     log_free(a_log);
     free(hp);
-    //pthread_join(communication, NULL);  
-    //pthread_join(handle_event, NULL);
+    pthread_join(communication, NULL);  
 
     printf("finish the editing\n");
     return 0;
