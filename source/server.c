@@ -583,8 +583,13 @@ void* communication_thread(void* arg){
     if (x == -1) {
         printf("write error:\n");
     }
-    free(dcdata);
-    free(bufferdoc);
+    if(dcdata!= NULL){
+        free(dcdata);   
+    }
+    if(bufferdoc!= NULL){
+        free(bufferdoc);
+    }
+    
 
     while(1){
         char buf[512];///// NEED TO CHANGE to check the len
