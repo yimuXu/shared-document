@@ -167,7 +167,7 @@ void deleteclient(char* username){
                 clients[j] = clients[j+1];
             }
             clientcount--;
-            printf("client %s deleted from clients!\n", username);
+            //printf("client %s deleted from clients!\n", username);
             break;
         }
     }
@@ -614,7 +614,7 @@ void* communication_thread(void* arg){
         pthread_mutex_unlock(&(current_client->mutex));
    
     }
-    printf("quit communication thread\n");
+    //printf("quit communication thread\n");
 
     return NULL;
 
@@ -628,7 +628,7 @@ void* register_client(void* arg){
     sigemptyset(&set);
     sigaddset(&set, SIGRTMIN);
     pthread_sigmask(SIG_BLOCK, &set, NULL); 
-    printf("register_client start work\n");   
+    //printf("register_client start work\n");   
     while(1){
         sig = sigwaitinfo(&set, &info);
         clientpid = info.si_pid;
@@ -698,13 +698,6 @@ int main(int argc, char** argv){
                     pthread_cancel(broadcast);  
                     pthread_join(broadcast,NULL);     
                     pthread_mutex_lock(&doc_mutex);                                
-                    // FILE* fp = fopen("doc.md","w");
-                    // if(fp == NULL){
-                    //     perror("file open failed");
-                    // }
-                    // markdown_print(doc,fp);
-                    // pthread_mutex_unlock(&doc_mutex);
-                    // fclose(fp);
                     free(clients);
                     //pthread_mutex_lock(&mutex);
                     quit_edit = 1;
@@ -721,7 +714,7 @@ int main(int argc, char** argv){
                 printf("%s",dcdata);
                 free(dcdata);
             }else if(strcmp(quit, "LOG?\n")== 0){
-                printf("print log!\n");
+                //printf("print log!\n");
                 // pthread_mutex_lock(&log_mutex);
                 // char* alog = editlog_flatten(a_log,VERSION_ALL);
                 // pthread_mutex_unlock(&log_mutex);
