@@ -845,6 +845,9 @@ int edit_doc(document* doc, char* data){
         char* link = strtok(NULL, " ");
         edit_result = markdown_link(doc, doc->version, start_pos,end_pos,link);
         //error handle
+    }else if(strcmp(commandtype, "HORIZONTAL_RULE") == 0){
+        int pos = atoi(strtok(NULL, " "));
+        edit_result = markdown_horizontal_rule(doc,doc->version,pos);
     }else{
         free(data_copy);
         return -1;
