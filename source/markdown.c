@@ -529,6 +529,7 @@ int find_last_order_number(document* doc, uint64_t pos){
 // modify followed order function
 int modify_order_number(document* doc, uint64_t version, uint64_t pos, char start){
     size_t current_pos = 0;
+    (void)version;
     chunk* current = find_chunk_at_logical_pos(doc,pos,&current_pos);
     if(current == NULL || current->data == NULL){
         return 1;////ERROR
