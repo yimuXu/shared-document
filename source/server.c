@@ -86,7 +86,8 @@ int checkauthorisation(char* username, int c2sfd, int s2cfd, int* rw_flag){
         //printf("token:%sis this\n",token);
         if(strcmp(token, username) == 0){
             char* edit = strtok(NULL, " \t\n");
-            //printf("user:%sis%sjiewei",token,edit);
+            printf("user:%sis%s/n",token,edit);
+            fflush(stdout);
             
             if(strncmp(edit,"write",strlen(edit)) == 0){
                 *rw_flag = 0;
@@ -101,7 +102,7 @@ int checkauthorisation(char* username, int c2sfd, int s2cfd, int* rw_flag){
 
     }
     write(s2cfd,"Reject UNAUTHORISED\n", 21); //debug
-    printf("%s,Reject UNAUTHORISED\n",username);
+    //printf("%s,Reject UNAUTHORISED\n",username);
     sleep(1);
     fclose(fp);
     return 1;
