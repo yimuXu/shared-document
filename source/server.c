@@ -706,7 +706,7 @@ int main(int argc, char** argv){
     while(1){
         //printf("server side debug is running!\n");
         if(fgets(quit, 256, stdin)){
-            if(strcmp(quit, "QUIT") == 0){
+            if(strcmp(quit, "QUIT\n") == 0){
                 pthread_mutex_lock(&clients_mutex);
                 if(clientcount == 0){
                     //printf("receive quit\n");
