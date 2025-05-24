@@ -561,8 +561,8 @@ void* communication_thread(void* arg){
         close(s2cfd);
         unlink(c2s);
         unlink(s2c);
-        printf("user:%s quit\n",username);
-        fflush(stdout);
+        //printf("user:%s quit\n",username);
+        //fflush(stdout);
         return NULL;
     }
     // add client to list//
@@ -593,7 +593,7 @@ void* communication_thread(void* arg){
             break;
         }   
        if(strncmp(buf,"DISCONNECT",10)==0){
-            printf("user %s disconnected\n",username);
+            //printf("user %s disconnected\n",username);
             pthread_mutex_lock(&clients_mutex);
             deleteclient(username);
             pthread_mutex_unlock(&clients_mutex);            
@@ -735,7 +735,7 @@ int main(int argc, char** argv){
     //pthread_join(communication, NULL);  
     //pthread_join(handle_event, NULL);
 
-    printf("finish the editing\n");
+    //printf("finish the editing\n");
     return 0;
     
 }
