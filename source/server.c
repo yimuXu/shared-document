@@ -298,13 +298,13 @@ int handle_edit_command(msginfo* msg) {
         free(log_line);
         return 0;
     }
-    if(strlen(data)>256){
-        size_t size = snprintf(NULL,0, "EDIT %s %s %s %s\n",username,data,"Reject","INTERNAL ERROR");
-        log_line = realloc(log_line,size+10);
-        snprintf(log_line,size, "EDIT %s %s %s %s\n",username,data,"Reject","INTERNAL ERROR");       
-        free(log_line);
-        return 1;
-    }
+    // if(strlen(data)>256){
+    //     size_t size = snprintf(NULL,0, "EDIT %s %s %s %s\n",username,data,"Reject","INTERNAL ERROR");
+    //     log_line = realloc(log_line,size+10);
+    //     snprintf(log_line,size, "EDIT %s %s %s %s\n",username,data,"Reject","INTERNAL ERROR");       
+    //     free(log_line);
+    //     return 1;
+    // }
     int result = edit_doc(doc,data);
     input_log(result,username,data,&log_line);
     pthread_mutex_lock(&log_mutex);
