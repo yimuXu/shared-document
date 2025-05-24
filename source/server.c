@@ -86,8 +86,8 @@ int checkauthorisation(char* username, int c2sfd, int s2cfd, int* rw_flag){
         //printf("token:%sis this\n",token);
         if(strcmp(token, username) == 0){
             char* edit = strtok(NULL, " \t\n");
-            printf("user:%sis%s/n",token,edit);
-            fflush(stdout);
+            //printf("user:%sis%s/n",token,edit);
+            //fflush(stdout);
             
             if(strncmp(edit,"write",strlen(edit)) == 0){
                 *rw_flag = 0;
@@ -148,7 +148,7 @@ struct clientpipe* addclient(int c2sfd, int s2cfd, char* username, int clientpid
     clients[clientcount].clientpid = clientpid;
     strcpy(clients[clientcount].c2sname, c2s);
     strcpy(clients[clientcount].s2cname, s2c);
-    //clients[clientcount].mq = {.front = 0, .rear = 0, .count = 0, .mutex = PTHREAD_MUTEX_INITIALIZER, .cond = PTHREAD_COND_INITIALIZER};
+
     clients[clientcount].command_count = 0;
     clientcount++;
     pthread_mutex_init(&(new_client->mutex),NULL);
@@ -561,6 +561,8 @@ void* communication_thread(void* arg){
         close(s2cfd);
         unlink(c2s);
         unlink(s2c);
+        printf("user:%s quit\n",username);
+        fflush(stdout);
         return NULL;
     }
     // add client to list//
