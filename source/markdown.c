@@ -244,7 +244,7 @@ int markdown_insert(document *doc, uint64_t version, size_t pos, const char *con
         return SUCCESS;
     }
     if(version != doc->version) {
-        printf("version is out of date!%ld,%ld\n",version,doc->version);
+        //printf("version is out of date!%ld,%ld\n",version,doc->version);
         return OUTDATE_VERSION;
     }
     if(pos > size) {
@@ -310,7 +310,7 @@ int markdown_delete(document *doc, uint64_t version, size_t pos, size_t len) {
         return INVALID_CURSOR_POS;
     }
     if(version != doc->version) {
-        printf("version is out of date!%ld,%ld\n",version,doc->version);
+        //printf("version is out of date!%ld,%ld\n",version,doc->version);
         return OUTDATE_VERSION;
     }
     if(pos > size) {
@@ -537,7 +537,7 @@ int modify_order_number(document* doc, uint64_t version, uint64_t pos, char star
     int count = 1;
     int newline_count = 0;
     size_t modifypos = pos; // for modify order num
-    printf("current data:%s\n",current->data);
+    //printf("current data:%s\n",current->data);
     while(current && current->data != NULL){
         //printf("imin\n");
         if(current->chunkversion == doc->version && (current->is_deleted == 0 || current->is_deleted > doc->version)){
@@ -571,7 +571,7 @@ int modify_order_number(document* doc, uint64_t version, uint64_t pos, char star
 int markdown_ordered_list(document *doc, uint64_t version, size_t pos) {
     (void)doc; (void)version; (void)pos;
     if(version != doc->version){
-        printf("outdate version.\n");
+        //printf("outdate version.\n");
         return OUTDATE_VERSION;
     }
     int is_newline = check_prev_char_newline(doc, pos);
@@ -672,7 +672,7 @@ int markdown_horizontal_rule(document *doc, uint64_t version, size_t pos) {
     char* newline = "\n";
     int next_newline = check_next_char(doc, version, pos, newline);
     int result;
-    printf("check char: %d",next_newline);
+    //printf("check char: %d",next_newline);
     if(next_newline == 0){
         result = markdown_insert(doc,version,pos,newline);
         if(result==-1){
@@ -734,7 +734,7 @@ void markdown_print(const document *doc, FILE *stream) {
     //uint64_t size = strlen(doctext);
     int x = fprintf(stream,"%s",doctext);
     if(x < 0 ){
-        printf("fprint failed\n");
+        //printf("fprint failed\n");
     }
     free(doctext);
 

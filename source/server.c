@@ -75,7 +75,7 @@ int checkauthorisation(char* username, int c2sfd, int s2cfd, int* rw_flag){
     (void) s2cfd;(void) c2sfd;
     FILE* fp = fopen("roles.txt", "r");////////////////////////////////////
     if(fp == NULL){
-        printf("open roles.txt error!\n");
+        //printf("open roles.txt error!\n");
         return 1;
     }
     char line[256];
@@ -125,11 +125,11 @@ void *makefifo(void* arg, char* c2sname, char* s2cname){
     int rt1 = mkfifo(c2sname, perm);
     int rt2 = mkfifo(s2cname, perm);
     if(rt1 == -1){
-        printf("mkfifo error!\n");
+        //printf("mkfifo error!\n");
         return NULL;
     }
     if(rt2 == -1){
-        printf("mkfifo error!\n");
+        //printf("mkfifo error!\n");
         return NULL;
     }
     //printf("FIFO created: %s, %s!\n",c2sname,s2cname);
@@ -225,7 +225,7 @@ char* test_flatten_all(all_log* lg){
     }
     da = malloc(size+1);
     if(!da){
-        printf("malloc failed\n");
+        //printf("malloc failed\n");
         return NULL;
     }
     cu = lg->head;
@@ -291,7 +291,7 @@ int handle_edit_command(msginfo* msg) {
     }
     if(strncmp(data, "DISCONNECT",10) == 0){
         // disconnect client
-        printf("user %s disconnected\n",username);
+        //printf("user %s disconnected\n",username);
         pthread_mutex_lock(&clients_mutex);
         deleteclient(username);
         pthread_mutex_unlock(&clients_mutex);
@@ -332,7 +332,7 @@ int time_spec_cmp(struct timespec a,struct timespec b){
 
 msginfo* heap_pop(minheap *heap) {
     if (heap->size == 0) {
-        printf("Heap is empty!\n");
+        //printf("Heap is empty!\n");
         return NULL;
     }
     msginfo* min = heap->msgs[0];
@@ -365,7 +365,7 @@ msginfo* heap_pop(minheap *heap) {
 
 void heap_push(minheap* heap, int size, msginfo* msg) {
     if (heap->size >= size) {
-        printf("Heap is full!\n");
+        //printf("Heap is full!\n");
         return;
     }
     int i = heap->size++;
@@ -549,11 +549,11 @@ void* communication_thread(void* arg){
     int c2sfd = open(c2s, O_RDONLY);
     int s2cfd = open(s2c, O_WRONLY);
     if(c2sfd == -1){
-        printf("open FIFO_C2S error!\n");
+        //printf("open FIFO_C2S error!\n");
         return NULL;
     }
     if(s2cfd == -1){
-        printf("open FIFO_S2C error!\n");
+        //printf("open FIFO_S2C error!\n");
         return NULL;
     }
     // read username from client
@@ -587,7 +587,7 @@ void* communication_thread(void* arg){
     pthread_mutex_unlock(&doc_mutex);
     int x = write(s2cfd, bufferdoc, strlen(bufferdoc));
     if (x == -1) {
-        printf("write error:\n");
+        //printf("write error:\n");
     }
     if(dcdata!= NULL){
         free(dcdata);   
@@ -655,7 +655,7 @@ void* register_client(void* arg){
         }else if (sig == SIGRTMIN) {
             // initial thread 
             pthread_create(&communication, NULL, communication_thread, &clientpid);      
-            //pthread_detach(communication);            
+            pthread_detach(communication);            
         }
     }
     return NULL;
@@ -666,7 +666,7 @@ int main(int argc, char** argv){
     // check if user input time interval for update document
     //test_msginfo_log_flow();
     if(argc != 2){
-        printf("input time interval!\n");
+        //printf("input time interval!\n");
         return 1;
     }
     sigset_t set;
@@ -699,14 +699,14 @@ int main(int argc, char** argv){
 
     int serverpid = getpid();
     printf("Server PID: %d\n", serverpid);
-    
+    fflush(stdout);
     quit_edit = 0;
     char quit[256];
     
     while(1){
         //printf("server side debug is running!\n");
         if(fgets(quit, 256, stdin)){
-            if(strcmp(quit, "QUIT\n") == 0){
+            if(strcmp(quit, "QUIT") == 0){
                 pthread_mutex_lock(&clients_mutex);
                 if(clientcount == 0){
                     //printf("receive quit\n");
@@ -729,10 +729,12 @@ int main(int argc, char** argv){
                 dcdata = markdown_flatten(doc);
                 pthread_mutex_unlock(&doc_mutex);
                 printf("%s",dcdata);
+                fflush(stdout);
                 free(dcdata);
             }else if(strcmp(quit, "LOG?\n")== 0){
                 pthread_mutex_lock(&log_mutex);
                 printf("%s", whole_log);
+                fflush(stdout);
                 pthread_mutex_unlock(&log_mutex);
             }            
         }
@@ -741,9 +743,7 @@ int main(int argc, char** argv){
     markdown_free(doc);
     log_free(a_log);
     free(hp);
-    pthread_join(communication_thread, NULL);  
-
-    printf("finish the editing\n");
+    //printf("finish the editing\n");
     return 0;
     
 }

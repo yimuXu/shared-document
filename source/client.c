@@ -144,7 +144,7 @@ int main (int argc, char** argv){
     // test_insert_original_doc_data();    
     (void)argc, (void)argv;
     if (argc != 3){
-        printf("please input 2 element!\n");
+        //printf("please input 2 element!\n");
         return 1;
     }
     int serverpid = atoi(argv[1]);
@@ -161,7 +161,7 @@ int main (int argc, char** argv){
     //wait 1 second for signal
     int x = sigtimedwait(&set, NULL, &timeout);
     if( x == -1){
-        printf("sigtimedwait error!\n");
+        //printf("sigtimedwait error!\n");
         return 1;
     }
     //open FIFO
@@ -178,11 +178,11 @@ int main (int argc, char** argv){
     int c2sfd = open(c2s, O_WRONLY);
     int s2cfd = open(s2c, O_RDONLY);
     if(c2sfd == -1){
-        printf("open FIFO_C2S error!\n");
+        //printf("open FIFO_C2S error!\n");
         exit(1);
     }
     if(s2cfd == -1){
-        printf("open FIFO_S2C error!\n");
+        //printf("open FIFO_S2C error!\n");
         exit(1);
     } 
     //printf("client %d: open fifo\n", clientpid);
@@ -199,7 +199,7 @@ int main (int argc, char** argv){
         //printf("%s",authorisation);
     }else{
         //printf("%s\n",authorisation);
-        printf("error of authorisation!\n");//debug
+        //printf("error of authorisation!\n");//debug
         return 1;
     }
 
@@ -224,14 +224,17 @@ int main (int argc, char** argv){
                 char* buf = markdown_flatten(local_doc);
                 pthread_mutex_unlock(&doc_mutex);
                 printf("%s",buf);
+                fflush(stdout);
                 free(buf);
             }else if(strncmp(buf, "PERM?\n",6)==0){
                 printf("%s",authorisation);
+                fflush(stdout);
             }else if(strncmp(buf, "LOG?\n",5) == 0) {
                 pthread_mutex_lock(&log_mutex);
                 editlog = log_flatten();
                 pthread_mutex_unlock(&log_mutex);
-                printf("%s\n", editlog);
+                printf("%s", editlog);
+                fflush(stdout);
                 free(editlog);
             }else if(strncmp(buf, "DISCONNECT\n",11) == 0) {
                 write(c2sfd,buf,256);
