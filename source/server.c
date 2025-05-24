@@ -735,7 +735,7 @@ int main(int argc, char** argv){
     //pthread_join(communication, NULL);  
     //pthread_join(handle_event, NULL);
 
-    //printf("finish the editing\n");
+    printf("finish the editing\n");
     return 0;
     
 }

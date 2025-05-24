@@ -659,7 +659,7 @@ int markdown_horizontal_rule(document *doc, uint64_t version, size_t pos) {
     char* newline = "\n";
     int next_newline = check_next_char(doc, version, pos, newline);
     int result;
-    //printf("check char: %d",next_newline);
+    printf("check char: %d",next_newline);
     if(next_newline == 0){
         result = markdown_insert(doc,version,pos,newline);
         if(result==-1){
