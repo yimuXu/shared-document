@@ -345,8 +345,6 @@ int markdown_delete(document *doc, uint64_t version, size_t pos, size_t len) {
     uint64_t last_pos;
     chunk* current = find_chunk_at_logical_pos(doc, pos, &current_pos);
     chunk* last_chunk = find_chunk_at_logical_pos(doc, pos + len, &last_pos);
-    //last_chunk = last_chunk->next;
-   //printf("current data: %ld, current_pos: %ld, last_pos: %ld\n",len,current_pos,last_pos);
     // split the chunk if the position is in the middle of a chunk
     if(current != last_chunk){
         // get the prev and after chunk of deleted chunk
@@ -372,13 +370,9 @@ int markdown_delete(document *doc, uint64_t version, size_t pos, size_t len) {
         }
         //printf("delete the whole chunk\n");
     }else if (current == last_chunk) {
-        
         //current must be 3 parts 
-        //printf("currentpos: %ld, len: %ld, size: %ld\n",current_pos,len,doc->size);
-
         current = split_chunk(current, current_pos, len, doc);
         current->next->is_deleted = doc->version + 1;            
-        
  
     }
     return SUCCESS;
@@ -540,15 +534,33 @@ int modify_order_number(document* doc, uint64_t version, uint64_t pos, char star
         return 1;////ERROR
     }
     int count = 1;
+    int newline_count = 0;
     size_t modifypos = pos; // for modify order num
-    while(current){
-        if(current->order_num != 0 && current->chunkversion == doc->version&& (current->is_deleted == 0 || current->is_deleted > doc->version)){
-            markdown_delete(doc, version, modifypos,2);
-            char num[3];
-            snprintf(num, 3,"%c.",start + count);
-            markdown_insert(doc,version,modifypos, num);
-            modifypos+= current->chunksize;
-            count++;
+    printf("current data:%s\n",current->data);
+    while(current && current->data != NULL){
+        //printf("imin\n");
+        if(current->chunkversion == doc->version && (current->is_deleted == 0 || current->is_deleted > doc->version)){
+            //printf("imindfg\n");
+            if(strcmp(current->data, "\n") == 0){
+                
+                newline_count ++;
+            }
+            if(newline_count > 1){
+                break;
+            }
+            if(current->order_num != 0 && newline_count<2){
+                //printf("idddd\n");
+                // markdown_delete(doc, version, modifypos,2);
+                char* num = malloc(3);
+                snprintf(num, 3,"%c.",start + count);
+                // markdown_insert(doc,version,modifypos, num);
+                free(current->data);
+                current->data = num;
+                modifypos+= current->chunksize;
+                count++;                
+                newline_count =0;
+            }
+
         }
         current = current->next;
     }
@@ -877,22 +889,27 @@ void log_free(all_log* a_log){
 //     char* result = markdown_flatten(doc);
 //     printf("Ordered list result:\n%s\n", result);
 //     markdown_ordered_list(doc, 1, 0);
-//     markdown_horizontal_rule(doc,1,30);
 //     markdown_increment_version(doc);
-//     printf("------------\n");
+//     //printf("------------\n");
 //     markdown_ordered_list(doc, 2, 7);
-//     markdown_increment_version(doc);
-
-//     markdown_ordered_list(doc, doc->version, 18);
-//     //markdown_increment_version(doc);
-//     //markdown_ordered_list(doc, doc->version, 26);
-//     markdown_increment_version(doc);
-//     markdown_ordered_list(doc, doc->version, 30);
-//     markdown_increment_version(doc);
-//     markdown_delete(doc, doc->version,7,10);
 //     markdown_increment_version(doc);
 //     result = markdown_flatten(doc);
 //     printf("Ordered list result:\n%s\n", result);
+//     markdown_ordered_list(doc, doc->version, 18);
+//     markdown_increment_version(doc);
+//     result = markdown_flatten(doc);
+//     printf("Ordered list result:\n%s\n", result);
+//     markdown_delete(doc, doc->version,7,10);
+//     markdown_increment_version(doc);
+//     markdown_ordered_list(doc, doc->version, 30);
+//     markdown_increment_version(doc);
+//     result = markdown_flatten(doc);
+//     printf("Ordered list result:\n%s\n", result);
+    
+//     markdown_increment_version(doc);
+//     result = markdown_flatten(doc);
+//     printf("Ordered list result:\n%s\n", result);
+    
 
 //     free(result);
 //     markdown_free(doc);
