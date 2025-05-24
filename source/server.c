@@ -728,7 +728,11 @@ int main(int argc, char** argv){
                 // pthread_mutex_lock(&log_mutex);
                 // char* alog = editlog_flatten(a_log,VERSION_ALL);
                 // pthread_mutex_unlock(&log_mutex);
+                whole_log = test_flatten_all(a_log);
                 printf("%s", whole_log);
+                if(whole_log != NULL){
+                    free(whole_log);
+                }
                 //free(alog);
             }            
         }
