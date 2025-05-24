@@ -250,20 +250,20 @@ void input_log(int edit_result,char* username_copy, char* data_copy, char** log_
     if(edit_result == 0){
         num_com_success ++;
         size_t size = snprintf(NULL,0,"EDIT %s %s SUCCESS\n",username_copy, data_copy) +1;
-        *log_line = realloc(*log_line,size); 
+        *log_line = realloc(*log_line,size+10); 
         snprintf(*log_line,size,"EDIT %s %s SUCCESS\n",username_copy, data_copy);
     }else if(edit_result == -1){
         size_t size = snprintf(NULL, 0, "EDIT %s %s %s %s\n", username_copy, data_copy, "Reject", "INVALID_POSITION") +1;
-        *log_line = realloc(*log_line,size);
+        *log_line = realloc(*log_line,size+10);
         snprintf(*log_line, size, "EDIT %s %s %s %s\n", username_copy, data_copy, "Reject", "INVALID_POSITION");
     }else if(edit_result == -2){
         size_t size = snprintf(NULL, 0, "EDIT %s %s %s %s\n", username_copy, data_copy, "Reject", "DELETED_POSITION") +1;
-        *log_line = realloc(*log_line,size);
+        *log_line = realloc(*log_line,size+10);
         snprintf(*log_line, size, "EDIT %s %s %s %s\n", username_copy, data_copy, "Reject", "DELETED_POSITION");
     }else if(edit_result == -3){
 
         size_t size = snprintf(NULL, 0, "EDIT %s %s %s %s\n", username_copy, data_copy, "Reject", "OUTDATED_VERSION") +1;
-        *log_line = realloc(*log_line,size);
+        *log_line = realloc(*log_line,size+10);
         snprintf(*log_line, size, "EDIT %s %s %s %s\n", username_copy, data_copy, "Reject", "OUTDATED_VERSION");
     }
 }
@@ -277,7 +277,7 @@ int handle_edit_command(msginfo* msg) {
     char* log_line = NULL;
     if(msg->authorisation != 0) {
         size_t size = snprintf(NULL,0, "EDIT %s %s %s %s %s %s %s\n",username,data,"Reject","UNAUTHORISED",data,"write","read\n");
-        log_line = realloc(log_line,size);
+        log_line = realloc(log_line,size+10);
         snprintf(log_line,size, "EDIT %s %s %s %s %s %s %s\n",username,data,"Reject","UNAUTHORISED",data,"write","read\n");
         pthread_mutex_lock(&log_mutex);
         append_to_editlog(a_log,&log_line);
@@ -300,7 +300,7 @@ int handle_edit_command(msginfo* msg) {
     }
     if(strlen(data)>256){
         size_t size = snprintf(NULL,0, "EDIT %s %s %s %s\n",username,data,"Reject","INTERNAL ERROR");
-        log_line = realloc(log_line,size);
+        log_line = realloc(log_line,size+10);
         snprintf(log_line,size, "EDIT %s %s %s %s\n",username,data,"Reject","INTERNAL ERROR");       
         free(log_line);
         return 1;
