@@ -87,11 +87,13 @@ int checkauthorisation(char* username, int c2sfd, int s2cfd, int* rw_flag){
         if(strcmp(token, username) == 0){
             char* edit = strtok(NULL, " \t\n");
             //printf("user:%sis%sjiewei",token,edit);
-            write(s2cfd, edit, strlen(edit));
-            if(strncmp(edit,"write",strlen(edit)+1) == 0){
+            
+            if(strncmp(edit,"write",strlen(edit)) == 0){
                 *rw_flag = 0;
+                write(s2cfd, "write", 6);
             }else{
                 *rw_flag = 1;
+                write(s2cfd, "read", 5);
             }
             fclose(fp);
             return 0;
