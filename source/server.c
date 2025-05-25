@@ -681,10 +681,6 @@ int main(int argc, char** argv){
     //(void)time_interval;
     whole_log = NULL;
 
-
-    //pthread_t handle_event;
-    // pthread_create(&handle_event, NULL, queue_handle_thread, NULL);
-
     // create struct to store client information
     clients = malloc(sizeof(struct clientpipe) * MAX_CLIENT);
     clientcount = 0; // count of clients

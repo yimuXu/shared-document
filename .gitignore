@@ -2,6 +2,7 @@
 
 !.gitignore
 !Makefile
+!reference/
 !libs/
 !libs/document.h
 !libs/markdown.h
