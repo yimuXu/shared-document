@@ -586,7 +586,7 @@ int markdown_ordered_list(document *doc, uint64_t version, size_t pos) {
     //printf(" i :%c\n",i);
     snprintf(buf, sizeof(buf), "%c.", i);
     //printf(" buf :%s\n",buf);
-    //modify_order_number(doc,version, pos, i);
+    modify_order_number(doc,version, pos, i);
     int result;
     int is_space = check_next_char(doc, version, pos, spa);
     if(is_space == 0){
@@ -880,39 +880,39 @@ void log_free(all_log* a_log){
     }
     free(a_log);
 }
-// int main() {
-//     document* doc = markdown_init();
+int main() {
+    document* doc = markdown_init();
 
-//     // Insert three ordered list items
-//     markdown_insert(doc,0,0,"rice noodle dumpling burger");
+    // Insert three ordered list items
+    markdown_insert(doc,0,0,"rice noodle dumpling burger");
     
-//     markdown_increment_version(doc);
-//     char* result = markdown_flatten(doc);
-//     printf("Ordered list result:\n%s\n", result);
-//     markdown_ordered_list(doc, 1, 0);
-//     markdown_increment_version(doc);
-//     //printf("------------\n");
-//     markdown_ordered_list(doc, 2, 7);
-//     markdown_increment_version(doc);
-//     result = markdown_flatten(doc);
-//     printf("Ordered list result:\n%s\n", result);
-//     markdown_ordered_list(doc, doc->version, 18);
-//     markdown_increment_version(doc);
-//     result = markdown_flatten(doc);
-//     printf("Ordered list result:\n%s\n", result);
-//     markdown_delete(doc, doc->version,7,10);
-//     markdown_increment_version(doc);
-//     markdown_ordered_list(doc, doc->version, 30);
-//     markdown_increment_version(doc);
-//     result = markdown_flatten(doc);
-//     printf("Ordered list result:\n%s\n", result);
+    markdown_increment_version(doc);
+    char* result = markdown_flatten(doc);
+    printf("Ordered list result:\n%s\n", result);
+    markdown_ordered_list(doc, 1, 0);
+    markdown_increment_version(doc);
+    //printf("------------\n");
+    markdown_ordered_list(doc, 2, 7);
+    markdown_increment_version(doc);
+    result = markdown_flatten(doc);
+    printf("Ordered list result:\n%s\n", result);
+    markdown_ordered_list(doc, doc->version, 18);
+    markdown_increment_version(doc);
+    result = markdown_flatten(doc);
+    printf("Ordered list result:\n%s\n", result);
+    markdown_delete(doc, doc->version,7,10);
+    markdown_increment_version(doc);
+    markdown_ordered_list(doc, doc->version, 30);
+    markdown_increment_version(doc);
+    result = markdown_flatten(doc);
+    printf("Ordered list result:\n%s\n", result);
     
-//     markdown_increment_version(doc);
-//     result = markdown_flatten(doc);
-//     printf("Ordered list result:\n%s\n", result);
+    markdown_increment_version(doc);
+    result = markdown_flatten(doc);
+    printf("Ordered list result:\n%s\n", result);
     
 
-//     free(result);
-//     markdown_free(doc);
-//     return 0;
-// }
+    free(result);
+    markdown_free(doc);
+    return 0;
+}
