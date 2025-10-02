@@ -2,15 +2,16 @@
 
 !.gitignore
 !Makefile
-!reference/
 !libs/
 !libs/document.h
 !libs/markdown.h
+!libs/command.h
 !source/
 !source/client.c
 !source/server.c
 !source/markdown.c
 !source/roles.txt
+!source/command.c
 !.vscode
 !.vscode/launch.json
 !.vscode/settings.json

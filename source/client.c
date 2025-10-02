@@ -1,5 +1,6 @@
 //TODO: client code that can send instructions to server.
-#include "markdown.h"
+#include "../libs/markdown.h"
+#include "../libs/command.h"
 
 document* local_doc;
 char* editlog;

@@ -14,7 +14,7 @@
 #include <sys/stat.h>
 #include <sys/epoll.h>
 #include <sys/wait.h>
-#include "markdown.h"
+#include "../libs/markdown.h"
 
 #define VERSION_ALL ((uint64_t)-1)
 #define MAX_CLIENT 10
@@ -298,13 +298,7 @@ int handle_edit_command(msginfo* msg) {
         free(log_line);
         return 0;
     }
-    // if(strlen(data)>256){
-    //     size_t size = snprintf(NULL,0, "EDIT %s %s %s %s\n",username,data,"Reject","INTERNAL ERROR");
-    //     log_line = realloc(log_line,size+10);
-    //     snprintf(log_line,size, "EDIT %s %s %s %s\n",username,data,"Reject","INTERNAL ERROR");       
-    //     free(log_line);
-    //     return 1;
-    // }
+
     int result = edit_doc(doc,data);
     input_log(result,username,data,&log_line);
     pthread_mutex_lock(&log_mutex);
@@ -630,7 +624,6 @@ void* communication_thread(void* arg){
         pthread_mutex_unlock(&(current_client->mutex));
    
     }
-    //printf("quit communication thread\n");
 
     return NULL;
 
@@ -644,7 +637,6 @@ void* register_client(void* arg){
     sigemptyset(&set);
     sigaddset(&set, SIGRTMIN);
     pthread_sigmask(SIG_BLOCK, &set, NULL); 
-    //printf("register_client start work\n");   
     while(1){
         sig = sigwaitinfo(&set, &info);
         clientpid = info.si_pid;
@@ -664,9 +656,7 @@ void* register_client(void* arg){
 
 int main(int argc, char** argv){
     // check if user input time interval for update document
-    //test_msginfo_log_flow();
     if(argc != 2){
-        //printf("input time interval!\n");
         return 1;
     }
     sigset_t set;
