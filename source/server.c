@@ -703,6 +703,7 @@ int main(int argc, char** argv){
                     free(clients);
                     //pthread_mutex_lock(&mutex);
                     quit_edit = 1;
+                    pthread_mutex_unlock(&doc_mutex);
                     break;
                 }else{
                     printf("QUIT rejected, %d clients still connected.\n", clientcount);
